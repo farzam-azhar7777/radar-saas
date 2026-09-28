@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // prompt; Chrome asks properly and is already a registered notification app.
 // Also drives the tab title, which works with no permission at all.
 export default class extends Controller {
-  static targets = ["button", "ready", "readyRow"]
+  static targets = ["button", "ready", "readyRow", "testResult"]
   static values = { url: String, interval: { type: Number, default: 30000 } }
 
   connect() {
@@ -31,6 +31,36 @@ export default class extends Controller {
     await Notification.requestPermission()
     this.render()
     this.poll()
+  }
+
+  // One click to prove alerts reach the screen. Chrome can allow them while
+  // macOS silently holds them back, and from inside the page the two look
+  // identical, so the only honest test is to send one and ask.
+  async test() {
+    if (!("Notification" in window)) return this.report("This browser cannot show notifications.", "signal")
+
+    let permission = Notification.permission
+    if (permission === "default") permission = await Notification.requestPermission()
+    this.render()
+    if (permission !== "granted") {
+      return this.report("Chrome is blocking alerts for this site. Click the icon left of the address, set Notifications to Allow, then try again.", "signal")
+    }
+
+    const n = new Notification("Radar test alert", {
+      body: "If you can read this, alerts from Radar reach your screen.",
+      tag: "radar-test"
+    })
+    n.onclick = () => { window.focus(); n.close() }
+    this.report("Sent. If no alert appeared, macOS is holding Chrome's notifications back: open System Settings, " +
+                "Notifications, Google Chrome, turn on Allow notifications and pick Banners or Alerts. " +
+                "Also check that no Focus mode is on. Alerts may be waiting in Notification Center.", "muted")
+  }
+
+  report(text, tone) {
+    if (!this.hasTestResultTarget) return
+    this.testResultTarget.textContent = text
+    this.testResultTarget.className = `mt-2 text-[0.8125rem] leading-relaxed ${tone === "signal" ? "text-signal" : "text-muted"}`
+    this.testResultTarget.hidden = false
   }
 
   async poll() {

@@ -64,6 +64,14 @@
       <h2 class="heading">Notifications</h2>
       <div class="mt-3 flex items-center gap-3">
         <div class="flex-1">
+          <p class="font-semibold">Browser alerts</p>
+          <p class="hint">A strong match or a finished proposal alerts you while a Radar tab is open.</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="alerts#test">Send a test alert</button>
+      </div>
+      <p data-alerts-target="testResult" hidden></p>
+      <div class="mt-3 flex items-center gap-3">
+        <div class="flex-1">
           <p class="font-semibold">Mac notifications</p>
           <p class="hint">For when no Radar tab is open. Browser alerts work whenever one is.</p>
         </div>

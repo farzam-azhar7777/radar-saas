@@ -42,4 +42,12 @@ class PollingPauseTest < ActionDispatch::IntegrationTest
     assert_select "aside", text: /Paused/
     assert_select "form[action=?] button", toggle_auto_polling_path, text: "Resume"
   end
+
+  # Chrome can allow alerts while macOS holds them back, and nothing in the
+  # page can see the difference, so Settings offers a one-click test.
+  test "settings offers a test alert with a place to explain the result" do
+    get settings_path
+    assert_select "button[data-action=?]", "alerts#test", text: "Send a test alert"
+    assert_select "[data-alerts-target=testResult][hidden]"
+  end
 end
