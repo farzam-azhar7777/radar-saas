@@ -1,0 +1,43 @@
+<div class="max-w-[46rem] space-y-9">
+  <section>
+    <h2 class="heading">What it does all day</h2>
+    <dl class="mt-4 divide-y divide-rule border-y border-rule">
+      <div class="flex gap-4 py-4">
+        <dt class="text-brand"><%= icon(:radar, css: "mt-0.5 h-5 w-5") %></dt>
+        <dd><p class="font-semibold">Watches Upwork for you</p><p class="hint mt-0.5">Every few minutes, with the searches you choose, through Upwork's official API.</p></dd>
+      </div>
+      <div class="flex gap-4 py-4">
+        <dt class="text-brand"><%= icon(:sliders, css: "mt-0.5 h-5 w-5") %></dt>
+        <dd><p class="font-semibold">Scores every job against your work</p><p class="hint mt-0.5">Title, skills, budget, the client's history and how many people already bid. Each score shows its reasons.</p></dd>
+      </div>
+      <div class="flex gap-4 py-4">
+        <dt class="text-brand"><%= icon(:pen, css: "mt-0.5 h-5 w-5") %></dt>
+        <dd><p class="font-semibold">Drafts the proposal from your real projects</p><p class="hint mt-0.5">In your voice, inside Upwork's limits. You read it, change what you like, and send it yourself.</p></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="grid gap-6 sm:grid-cols-2">
+    <div>
+      <h2 class="heading">You will need</h2>
+      <ul class="mt-3 space-y-2.5 text-[0.9rem]">
+        <li class="flex gap-2.5"><%= icon(:terminal, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> Claude Code, signed in to your Claude account</li>
+        <li class="flex gap-2.5"><%= icon(:key, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> An Upwork API key, or about two days to get one</li>
+        <li class="flex gap-2.5"><%= icon(:folder, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> The folder where your project repositories live</li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="heading">Radar never</h2>
+      <ul class="mt-3 space-y-2.5 text-[0.9rem]">
+        <li class="flex gap-2.5"><%= icon(:x, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> Submits a proposal. You always send it yourself.</li>
+        <li class="flex gap-2.5"><%= icon(:x, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> Messages a client or spends a Connect.</li>
+        <li class="flex gap-2.5"><%= icon(:x, css: "mt-0.5 h-4 w-4 flex-none text-muted") %> Sends your work anywhere but Claude, to write it up.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="hint">Upwork permanently bans tools that bid for you, so this line is built into Radar rather than promised: it has no way to submit anything.</p>
+</div>
+
+<%= render "setup/steps/footer", step: @step,
+      primary: button_to((Onboarding.done?("welcome") ? "Continue" : "Start setup"), setup_continue_path("welcome"), class: "btn btn-primary btn-lg") %>

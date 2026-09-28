@@ -1,0 +1,18 @@
+<details class="mt-10 max-w-[46rem]">
+  <summary class="cursor-pointer text-[0.875rem] font-semibold text-muted hover:text-ink">Add a project that is not on this computer</summary>
+  <p class="hint mt-2">For work in a client's repository, on an old laptop, or anything you cannot scan. Only what you type is used.</p>
+  <%= form_with url: setup_knowledge_projects_path, scope: :project, class: "mt-4 grid gap-4 sm:grid-cols-2" do |f| %>
+    <div><%= f.label :name, "Project name", class: "field-label" %><%= f.text_field :name, class: "input", required: true %></div>
+    <div><%= f.label :client, class: "field-label" %><%= f.text_field :client, class: "input" %></div>
+    <div><%= f.label :role, "Your role", class: "field-label" %><%= f.text_field :role, class: "input", placeholder: "Lead backend developer" %></div>
+    <div><%= f.label :period, "When", class: "field-label" %><%= f.text_field :period, class: "input", placeholder: "2022-2024" %></div>
+    <div class="sm:col-span-2"><%= f.label :one_liner, "What it is, in one sentence", class: "field-label" %><%= f.text_field :one_liner, class: "input" %></div>
+    <div class="sm:col-span-2"><%= f.label :stack, "Built with", class: "field-label" %><%= f.text_field :stack, class: "input", placeholder: "Ruby on Rails, PostgreSQL, Stripe" %></div>
+    <div class="sm:col-span-2">
+      <%= f.label :highlights, "Highlights, one per line", class: "field-label" %>
+      <%= f.text_area :highlights, rows: 3, class: "textarea", placeholder: "Moved billing to Stripe subscriptions for 4,000 accounts" %>
+    </div>
+    <div class="sm:col-span-2"><%= f.label :url, "Public link", class: "field-label" %><%= f.url_field :url, class: "input", placeholder: "https://" %></div>
+    <div><button class="btn btn-secondary"><%= icon(:plus) %> Add to career folder</button></div>
+  <% end %>
+</details>

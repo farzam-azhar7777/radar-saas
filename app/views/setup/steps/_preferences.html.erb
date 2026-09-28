@@ -1,0 +1,51 @@
+<% hours = (0..23).map { |h| [ Time.zone.parse("#{h}:00").strftime("%-l %P"), h ] } %>
+<%= form_with url: setup_preferences_path, method: :patch, scope: :preferences, id: "preferences-form", class: "max-w-[46rem] space-y-8" do |f| %>
+  <section class="panel divide-y divide-rule">
+    <label class="flex cursor-pointer items-start gap-4 px-5 py-4">
+      <%= f.check_box :auto_generate, { checked: @auto, class: "check mt-1" }, "1", "0" %>
+      <span>
+        <span class="block font-semibold">Write proposals on their own</span>
+        <span class="hint block">For searches you mark as automatic, a proposal is drafted the moment a strong match arrives, so it is ready when you look. Off, Radar only tells you and waits.</span>
+      </span>
+    </label>
+    <div class="flex flex-wrap items-center gap-4 px-5 py-4">
+      <div class="flex-1">
+        <label class="font-semibold" for="daily_cap">At most this many a day</label>
+        <p class="hint">Each proposal takes a few minutes of Claude time on your plan. The limit resets at midnight.</p>
+      </div>
+      <%= f.number_field :daily_cap, value: @cap, min: 1, max: 60, id: "daily_cap", class: "input !mt-0 w-24 text-right tnum" %>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">When to check most often</h2>
+    <p class="hint mt-1">Every few minutes during these hours, every twenty outside them. The earliest proposals get read, so this is when you are awake to send them. Your timezone: <%= Profile.current.timezone_label || "not set" %>.</p>
+    <div class="mt-4 flex flex-wrap items-end gap-4">
+      <div>
+        <label class="field-label" for="active_from">From</label>
+        <%= f.select :active_from, options_for_select(hours, @hours.first % 24), {}, id: "active_from", class: "select w-36" %>
+      </div>
+      <div>
+        <label class="field-label" for="active_to">Until</label>
+        <%= f.select :active_to, options_for_select(hours, @hours.last % 24), {}, id: "active_to", class: "select w-36" %>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">How to tell you</h2>
+    <p class="hint mt-1">While a Radar tab is open, your browser shows an alert for every strong match and every finished proposal. You turn those on from the app once setup is done.</p>
+    <% if RUBY_PLATFORM.include?("darwin") %>
+      <label class="mt-4 flex cursor-pointer items-start gap-4">
+        <%= f.check_box :native_notifications, { checked: Setting.native_notifications?, class: "check mt-1" }, "1", "0" %>
+        <span>
+          <span class="block font-semibold">Also use Mac notifications</span>
+          <span class="hint block">For when no tab is open. Needs terminal-notifier, or falls back to a plain system alert.</span>
+        </span>
+      </label>
+    <% end %>
+  </section>
+<% end %>
+
+<%= render "setup/steps/footer", step: @step,
+      primary: tag.button("Save", form: "preferences-form", class: "btn btn-primary btn-lg") %>

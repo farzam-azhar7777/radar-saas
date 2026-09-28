@@ -1,0 +1,36 @@
+default: &default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    - queues: "default"
+      threads: 3
+      processes: 1
+      polling_interval: 1
+    # Generation used to be serialized, on the reasoning that two concurrent
+    # runs inside pitchsmith could collide. They cannot: every run is launched
+    # with --allowedTools Read,Glob,Grep and so writes nothing at all, which
+    # test/services/no_submit_path_test.rb enforces.
+    #
+    # The cost of that obsolete constraint was real. 11 of 62 generations in
+    # four days sat in the queue behind another, one of them for 11.5 minutes,
+    # which looked exactly like a slow generation from the outside.
+    - queues: "generation"
+      threads: 3
+      processes: 1
+      polling_interval: 1
+    # Setup's project write-ups. Kept apart from generation so writing up
+    # twenty projects never makes a live proposal wait behind them.
+    - queues: "knowledge"
+      threads: 3
+      processes: 1
+      polling_interval: 1
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

@@ -1,0 +1,38 @@
+<%# The one bold moment: repos land on the scope as their history is read. %>
+<% read = scan.repos.where.not(inventory_key: nil).to_a %>
+<div class="grid items-center gap-10 md:grid-cols-[18rem_1fr]" data-controller="autorefresh" data-autorefresh-every-value="2500">
+  <div class="scope mx-auto" role="img" aria-label="Scanning <%= scan.progress_total %> repositories">
+    <div class="scope-sweep"></div>
+    <% read.first(150).each do |repo| %>
+      <% h = Digest::MD5.hexdigest(repo.path).to_i(16) %>
+      <% angle = (h % 360) * Math::PI / 180 %>
+      <% radius = 12 + (h / 360 % 34) %>
+      <% kind = repo.own_commits.to_i >= 200 ? "blip-strong" : (repo.own_commits.to_i.positive? ? "" : "blip-faint") %>
+      <i class="blip <%= kind %>" style="left: <%= (50 + radius * Math.cos(angle)).round(2) %>%; top: <%= (50 + radius * Math.sin(angle)).round(2) %>%" title="<%= repo.name %>"></i>
+    <% end %>
+  </div>
+
+  <div>
+    <p class="heading">
+      <% if scan.status == "discovering" %>Looking for repositories in <%= scan.root_path.sub(Dir.home, "~") %>
+      <% else %>Reading your history<% end %>
+    </p>
+    <p class="hint mt-1"><%= scan.progress_label.presence || "Starting…" %></p>
+    <% if scan.progress_total.to_i.positive? %>
+      <div class="meter mt-4 max-w-sm"><i style="width: <%= scan.progress_percent %>%"></i></div>
+      <p class="mt-2 text-[0.8125rem] tnum text-muted"><%= scan.progress_done %> of <%= scan.progress_total %></p>
+    <% end %>
+    <% if scan.status == "inventorying" %>
+      <dl class="mt-6 flex gap-8">
+        <div><dt class="hint">Yours</dt><dd class="font-display text-2xl font-semibold tnum"><%= read.count { |r| r.own_commits.to_i.positive? } %></dd></div>
+        <div><dt class="hint">Not yours</dt><dd class="font-display text-2xl font-semibold tnum text-muted"><%= read.count { |r| r.own_commits.to_i.zero? } %></dd></div>
+      </dl>
+      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-muted">
+        <li class="flex items-center gap-1.5"><i class="inline-block h-2.5 w-2.5 rounded-full" style="background: var(--color-signal)"></i> 200+ of your commits</li>
+        <li class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-full bg-brand"></i> Yours</li>
+        <li class="flex items-center gap-1.5"><i class="inline-block h-1.5 w-1.5 rounded-full bg-faint"></i> Someone else's</li>
+      </ul>
+      <p class="hint mt-6">About a minute for a hundred repositories. You can leave this page; it carries on.</p>
+    <% end %>
+  </div>
+</div>

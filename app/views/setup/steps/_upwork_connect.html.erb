@@ -1,0 +1,65 @@
+<% probe = (JSON.parse(Setting.get("setup.upwork_probe", "{}")) rescue {}) %>
+<% done = Onboarding.done?("upwork_connect") %>
+<% callback_host = (URI(@redirect_uri.to_s).host rescue nil) %>
+<div class="max-w-[46rem] space-y-6">
+  <% if done %>
+    <div class="panel panel-pad">
+      <div class="flex items-start gap-4">
+        <span class="grid h-10 w-10 flex-none place-items-center rounded-[10px] bg-brand-soft text-brand"><%= icon(:plug, css: "h-5 w-5") %></span>
+        <div class="min-w-0 flex-1">
+          <p class="font-semibold">Connected to Upwork</p>
+          <p class="hint mt-0.5">A test search just worked<%= probe["total"] ? ": #{number_with_delimiter(probe['total'])} open jobs match \"developer\"" : "" %>.</p>
+          <% if Array(probe["titles"]).any? %>
+            <ul class="mt-3 space-y-1 text-[0.85rem] text-muted">
+              <% probe["titles"].first(3).each do |t| %><li class="truncate"><%= t %></li><% end %>
+            </ul>
+          <% end %>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-wrap gap-2 border-t border-rule pt-4">
+        <%= button_to "Test again", setup_upwork_verify_path, class: "btn btn-secondary btn-sm", data: { turbo_submits_with: "Testing…" } %>
+        <%= button_to "Disconnect", setup_upwork_disconnect_path, method: :delete, class: "btn btn-ghost btn-sm",
+              form: { data: { turbo_confirm: "Disconnect Upwork? Radar stops finding jobs until you connect again." } } %>
+      </div>
+    </div>
+  <% else %>
+    <ol class="space-y-6">
+      <li class="flex gap-4">
+        <span class="step-mark mt-0.5">1</span>
+        <div class="flex-1">
+          <p class="font-semibold">Approve Radar on Upwork</p>
+          <p class="hint mt-0.5">Opens in a new tab. Sign in if asked, then press Allow.</p>
+          <%= link_to setup_upwork_authorize_path, target: "_blank", rel: "noopener", class: "btn btn-secondary mt-3" do %>
+            Open Upwork <%= icon(:external) %>
+          <% end %>
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="step-mark mt-0.5">2</span>
+        <div class="flex-1">
+          <p class="font-semibold">Paste the address Upwork sent you to</p>
+          <p class="hint mt-0.5">
+            After Allow, Upwork opens your callback address<%= callback_host ? " on #{callback_host}" : "" %>.
+            The page may say it cannot be reached. That is fine: copy the whole address from the browser's address bar and paste it here.
+          </p>
+          <%= form_with url: setup_upwork_code_path, id: "upwork-code-form", class: "mt-3" do %>
+            <textarea name="callback" rows="3" class="textarea font-mono text-[0.8rem]" placeholder="<%= @redirect_uri %>?code=...&state=..." spellcheck="false" required></textarea>
+            <p class="field-hint">Codes work once and expire within minutes, so paste it straight away.</p>
+          <% end %>
+        </div>
+      </li>
+    </ol>
+
+    <p class="hint">
+      If the callback address reaches this app, through a tunnel for example, Radar finishes by itself and this page moves on.
+      Running another copy of Radar behind the same tunnel? Stop it while you connect, or that copy will use the code first.
+    </p>
+  <% end %>
+</div>
+
+<% primary = if done
+     button_to "Continue", setup_continue_path("upwork_connect"), class: "btn btn-primary btn-lg"
+   else
+     tag.button("Connect", form: "upwork-code-form", class: "btn btn-primary btn-lg", data: { turbo_submits_with: "Connecting…" })
+   end %>
+<%= render "setup/steps/footer", step: @step, primary: primary %>

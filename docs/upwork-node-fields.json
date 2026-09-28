@@ -1,0 +1,396 @@
+[
+  {
+    "name": "id",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "ID",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "job",
+    "type": {
+      "name": "MarketplaceJobPosting",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "title",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "description",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "ciphertext",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "duration",
+    "type": {
+      "name": "JobDuration",
+      "kind": "ENUM",
+      "ofType": null
+    }
+  },
+  {
+    "name": "durationLabel",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "engagement",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "amount",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Money",
+        "kind": "OBJECT",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "recordNumber",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "experienceLevel",
+    "type": {
+      "name": "FreelancerProfileExperienceLevel",
+      "kind": "ENUM",
+      "ofType": null
+    }
+  },
+  {
+    "name": "category",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "subcategory",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "freelancersToHire",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Int",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "relevance",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "MarketplaceJobPostingSearchRelevance",
+        "kind": "OBJECT",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "enterprise",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Boolean",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "relevanceEncoded",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "totalApplicants",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Int",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "preferredFreelancerLocation",
+    "type": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "preferredFreelancerLocationMandatory",
+    "type": {
+      "name": "Boolean",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "premium",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Boolean",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "clientNotSureFields",
+    "type": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "clientPrivateFields",
+    "type": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "applied",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "Boolean",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "createdDateTime",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "publishedDateTime",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "renewedDateTime",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "client",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": "MarketplaceJobPostingSearchClientInfo",
+        "kind": "OBJECT",
+        "ofType": null
+      }
+    }
+  },
+  {
+    "name": "skills",
+    "type": {
+      "name": null,
+      "kind": "NON_NULL",
+      "ofType": {
+        "name": null,
+        "kind": "LIST",
+        "ofType": {
+          "name": "MarketplaceJobPostingSearchSkill"
+        }
+      }
+    }
+  },
+  {
+    "name": "occupations",
+    "type": {
+      "name": "MarketplaceJobPostingSearchOccupations",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "hourlyBudgetType",
+    "type": {
+      "name": "JobPostingHourlyBudgetType",
+      "kind": "ENUM",
+      "ofType": null
+    }
+  },
+  {
+    "name": "hourlyBudgetMin",
+    "type": {
+      "name": "Money",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "hourlyBudgetMax",
+    "type": {
+      "name": "Money",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "localJobUserDistance",
+    "type": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "weeklyBudget",
+    "type": {
+      "name": "Money",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "engagementDuration",
+    "type": {
+      "name": "EngagementDuration",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  },
+  {
+    "name": "totalFreelancersToHire",
+    "type": {
+      "name": "Int",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "teamId",
+    "type": {
+      "name": "ID",
+      "kind": "SCALAR",
+      "ofType": null
+    }
+  },
+  {
+    "name": "freelancerClientRelation",
+    "type": {
+      "name": "FreelancerClientRelation",
+      "kind": "OBJECT",
+      "ofType": null
+    }
+  }
+]

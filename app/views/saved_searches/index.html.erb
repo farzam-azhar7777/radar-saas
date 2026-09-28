@@ -1,0 +1,33 @@
+<% content_for :title, "Searches - Radar" %>
+<div class="flex flex-wrap items-end gap-4">
+  <div class="min-w-0 flex-1">
+    <h1 class="title">Searches</h1>
+    <p class="lede mt-1">What Radar looks for on Upwork. Each search is queried on its own, so a broad one cannot bury the jobs a narrow one finds.</p>
+  </div>
+  <%= link_to new_saved_search_path, class: "btn btn-primary" do %><%= icon(:plus) %> Add a search<% end %>
+</div>
+
+<div class="panel mt-6 divide-y divide-rule overflow-hidden">
+  <% @searches.each do |s| %>
+    <div class="grid gap-x-6 gap-y-3 px-5 py-4 md:grid-cols-[1fr_12rem_auto] md:items-center">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="font-semibold"><%= s.name %></p>
+          <% if s.auto_generate? %><span class="chip chip-good">Writes automatically</span><% else %><span class="chip">Alerts only</span><% end %>
+          <% unless s.active? %><span class="chip chip-outline">Paused</span><% end %>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-1.5"><% s.terms_list.each do |t| %><span class="chip chip-outline"><%= t %></span><% end %></div>
+        <% if s.excluded_keywords_list.any? %><p class="mt-2 text-[0.8125rem] text-faint">Never: <%= s.excluded_keywords_list.join(", ") %></p><% end %>
+      </div>
+      <div class="text-[0.8125rem] tnum">
+        <p><span class="text-muted">Inbox at</span> <span class="font-semibold"><%= s.threshold %></span></p>
+        <p><span class="text-muted">Alert at</span> <span class="font-semibold text-signal"><%= s.hot_threshold %></span></p>
+        <p class="text-faint"><%= pluralize(s.job_postings.count, "job") %> found</p>
+      </div>
+      <%= link_to "Edit", edit_saved_search_path(s), class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+  <% if @searches.none? %>
+    <div class="px-8 py-12 text-center"><p class="heading">No searches</p><p class="hint mt-1">Radar looks for nothing until you add one.</p></div>
+  <% end %>
+</div>

@@ -1,0 +1,30 @@
+# Starting points for people who skip the project scan, or who want to add a
+# search by hand. Terms are phrases that appear in real Upwork posts.
+- name: Ruby on Rails
+  terms: [ruby on rails, rails developer, ror, hotwire, rails api]
+- name: Full stack
+  terms: [full stack developer, full stack engineer, fullstack, full-stack web]
+- name: Web application
+  terms: [web application developer, web app development, saas development, web developer]
+- name: React / Next.js
+  terms: [react developer, next.js, nextjs, react frontend, typescript react]
+- name: Node.js
+  terms: [node.js developer, nodejs, express api, nestjs]
+- name: Python / Django
+  terms: [django developer, python backend, django rest framework]
+- name: Python / FastAPI
+  terms: [fastapi, python api, pydantic, async python]
+- name: AI and LLM apps
+  terms: [llm integration, openai api, claude api, rag, langchain, ai agent, chatbot developer]
+- name: Mobile
+  terms: [react native, flutter developer, expo, ios app, android app]
+- name: PHP / Laravel
+  terms: [laravel developer, php developer, laravel api]
+- name: WordPress
+  terms: [wordpress developer, woocommerce, wordpress plugin]
+- name: Shopify
+  terms: [shopify developer, shopify app, liquid theme]
+- name: DevOps and cloud
+  terms: [devops engineer, aws infrastructure, terraform, kubernetes, ci/cd pipeline]
+- name: Data and scraping
+  terms: [data engineer, etl pipeline, web scraping, data pipeline]

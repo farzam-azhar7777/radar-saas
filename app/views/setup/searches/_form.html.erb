@@ -1,0 +1,50 @@
+<%# locals: s (a Suggestion or nil), key (unique per form on the page), open (bool) %>
+<% s ||= nil %>
+<% frame = "preview-#{key}" %>
+<% templates = CareerData.instance.templates %>
+<%= form_with url: setup_searches_path, scope: :search, class: "space-y-4" do |f| %>
+  <div class="grid gap-4 sm:grid-cols-[1fr_auto]">
+    <div>
+      <%= f.label :name, "Name", class: "field-label", for: "name-#{key}" %>
+      <%= f.text_field :name, value: s&.name, id: "name-#{key}", class: "input", required: true, placeholder: "Ruby on Rails" %>
+    </div>
+    <label class="flex cursor-pointer items-center gap-2.5 self-end pb-2.5 text-[0.875rem] font-semibold">
+      <%= f.check_box :auto_generate, { checked: s&.auto_generate, id: "auto-#{key}", class: "check" }, "1", "0" %>
+      Write proposals automatically
+    </label>
+  </div>
+  <div>
+    <%= f.label :terms_text, "Words a client would use", class: "field-label", for: "terms-#{key}" %>
+    <%= f.text_area :terms_text, value: Array(s&.terms).join(", "), rows: 2, id: "terms-#{key}", class: "textarea !min-h-0", required: true,
+          placeholder: "rails developer, ruby on rails, hotwire" %>
+    <p class="field-hint">Separated by commas. Short phrases from real posts work best; one broad word floods the inbox.</p>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div>
+      <%= f.label :threshold, "Inbox at", class: "field-label", for: "threshold-#{key}" %>
+      <%= f.number_field :threshold, value: s&.threshold || 70, min: 0, max: 100, id: "threshold-#{key}", class: "input tnum" %>
+      <p class="field-hint">Scores from 0 to 100. At or above this, a job shows in your inbox.</p>
+    </div>
+    <div>
+      <%= f.label :hot_threshold, "Alert me at", class: "field-label", for: "hot-#{key}" %>
+      <%= f.number_field :hot_threshold, value: s&.hot_threshold || 80, min: 0, max: 100, id: "hot-#{key}", class: "input tnum" %>
+      <p class="field-hint">At or above this it interrupts you, and is written if automatic.</p>
+    </div>
+    <div>
+      <%= f.label :template_name, "Proposal shape", class: "field-label", for: "template-#{key}" %>
+      <%= f.select :template_name, templates.map { |t| [ t.tr("-", " ").capitalize, t ] }, { selected: s&.template_name || templates.first }, id: "template-#{key}", class: "select" %>
+    </div>
+  </div>
+  <div>
+    <%= f.label :excluded_keywords_text, "Words that rule a job out", class: "field-label", for: "excl-#{key}" %>
+    <%= f.text_field :excluded_keywords_text, value: Array(s&.excluded_keywords).join(", "), id: "excl-#{key}", class: "input", placeholder: "wordpress, shopify" %>
+  </div>
+
+  <turbo-frame id="<%= frame %>"></turbo-frame>
+
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-primary btn-sm"><%= icon(:plus) %> Add this search</button>
+    <button class="btn btn-secondary btn-sm" formaction="<%= setup_searches_preview_path(frame: frame) %>" data-turbo-frame="<%= frame %>"
+            data-turbo-submits-with="Asking Upwork…"><%= icon(:search) %> Preview on Upwork</button>
+  </div>
+<% end %>

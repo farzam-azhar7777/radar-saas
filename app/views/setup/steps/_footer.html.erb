@@ -1,0 +1,36 @@
+<%# locals: step, primary (html). Back, then skip or the reason it is required,
+    then the step's own primary action. Skipping never happens in one click: it
+    opens what is lost first, and asks again. %>
+<% previous = Onboarding.previous_before(step.key) %>
+<div class="mt-10 max-w-[46rem]" data-controller="reveal">
+  <div class="flex flex-wrap items-center gap-3 border-t border-rule pt-5">
+    <% if revisiting? %>
+      <%= link_to settings_path, class: "btn btn-ghost" do %><%= icon(:back) %> Settings<% end %>
+    <% elsif previous %>
+      <%= link_to setup_step_path(previous.key), class: "btn btn-ghost" do %><%= icon(:back) %> Back<% end %>
+    <% end %>
+
+    <div class="ml-auto flex flex-wrap items-center justify-end gap-3">
+      <% if step.skippable? && Onboarding.status(step.key) != :done && !revisiting? %>
+        <button type="button" class="btn btn-ghost" data-action="reveal#toggle" aria-expanded="false" data-reveal-target="toggle">Skip this step</button>
+      <% elsif step.required? && !Onboarding.done?(step.key) && step.key != "welcome" %>
+        <span class="text-[0.8125rem] text-faint">Required to continue</span>
+      <% end %>
+      <%= primary %>
+    </div>
+  </div>
+
+  <% if step.skippable? && !revisiting? %>
+    <div class="notice notice-warn mt-4" data-reveal-target="panel" hidden>
+      <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+      <div class="flex-1">
+        <p class="font-semibold">If you skip <%= step.rail.downcase %></p>
+        <p class="mt-1"><%= step.skip_cost %></p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <%= button_to "Skip anyway", setup_skip_path(step.key), class: "btn btn-secondary btn-sm" %>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="reveal#toggle">Stay and do it</button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

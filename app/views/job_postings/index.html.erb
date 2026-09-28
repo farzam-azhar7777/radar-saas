@@ -1,0 +1,35 @@
+<% content_for :title, "Inbox - Radar" %>
+<%= turbo_stream_from "inbox" %>
+
+<div class="flex flex-wrap items-end gap-4">
+  <div class="min-w-0 flex-1">
+    <h1 class="title">Inbox</h1>
+    <p class="hint mt-1">
+      <%= pluralize(@postings.size, "job") %><%= " matching \"#{@query}\"" if @query.present? %> worth a look.
+      <span class="hidden md:inline">Move with <span class="kbd">j</span> <span class="kbd">k</span>, open with <span class="kbd">Enter</span>.</span>
+    </p>
+  </div>
+</div>
+
+<%= render "job_postings/toolbar", path: root_path %>
+
+<% if @postings.empty? %>
+  <div class="panel mt-6 px-8 py-16 text-center">
+    <div class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sunk text-muted"><%= icon(:inbox, css: "h-5 w-5") %></div>
+    <% if @query.present? %>
+      <p class="heading mt-4">No jobs match "<%= @query %>"</p>
+      <p class="hint mt-1">Try a shorter word, or <%= link_to "clear the search", url_for(sort: @sort, search: params[:search]), class: "link" %>.</p>
+    <% else %>
+      <p class="heading mt-4">Nothing waiting</p>
+      <p class="hint mx-auto mt-1 max-w-md">Radar checks Upwork every few minutes and puts anything that clears your searches here. Check now to look straight away.</p>
+      <%= button_to poll_path, class: "btn btn-primary mt-5", form: { class: "inline-block" } do %><%= icon(:refresh) %> Check now<% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="panel mt-5 overflow-hidden" data-controller="keynav" data-keynav-selected-class="bg-surface">
+    <div class="hidden grid-cols-[3.5rem_1fr_12rem_8rem] gap-5 border-b border-rule px-5 py-2.5 text-[0.75rem] font-semibold text-faint md:grid">
+      <span>Fit</span><span>Job</span><span>Competition</span><span class="text-right">Proposal</span>
+    </div>
+    <% @postings.each { |posting| %><%= render "job_postings/row", posting: posting %><% } %>
+  </div>
+<% end %>

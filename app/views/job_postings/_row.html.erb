@@ -1,0 +1,45 @@
+<div id="<%= dom_id(posting) %>" data-keynav-target="item"
+     class="grid grid-cols-[3.5rem_1fr] gap-x-5 gap-y-3 border-b border-rule px-5 py-4 transition-colors last:border-0 hover:bg-surface md:grid-cols-[3.5rem_1fr_12rem_8rem] md:items-center">
+  <div class="row-span-2 md:row-span-1">
+    <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>" title="Fit <%= posting.score %> of 100"><span><%= posting.score %></span></span>
+  </div>
+
+  <div class="min-w-0">
+    <div class="flex items-center gap-2">
+      <%= link_to posting.title, job_posting_path(posting), data: { keynav_target: "link" },
+            class: "truncate text-[0.975rem] font-semibold leading-snug hover:underline hover:underline-offset-2" %>
+      <% if posting.hot? %><span class="chip chip-signal flex-none">Strong</span><% end %>
+    </div>
+    <p class="mt-1 line-clamp-1 text-[0.8125rem] text-muted"><%= posting.description.to_s.squish.truncate(170) %></p>
+    <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-muted">
+      <span class="font-semibold text-ink"><%= posting.budget_label %></span>
+      <% if posting.client_location %><span><%= posting.client_location %></span><% end %>
+      <% if posting.client_total_spent.to_f.positive? %><span>$<%= number_to_human(posting.client_total_spent.to_i, units: { thousand: "k", million: "m" }, format: "%n%u", precision: 2) %> spent</span><% end %>
+      <% if posting.saved_search %><span><%= posting.saved_search.name %></span><% end %>
+    </p>
+  </div>
+
+  <%# Bids against age. This pairing is the bid decision. %>
+  <div class="col-start-2 md:col-start-auto">
+    <div class="flex items-baseline justify-between text-[0.8125rem] tnum">
+      <span class="font-semibold <%= posting.total_applicants.to_i >= 30 ? 'text-signal' : 'text-ink' %>"><%= posting.pressure_label %></span>
+      <span class="text-faint"><%= posting.age_label %></span>
+    </div>
+    <div class="meter mt-1.5"><i class="<%= gauge_tone(posting.pressure) %>" style="width: <%= [ (posting.pressure * 100).round, 3 ].max %>%"></i></div>
+    <% if posting.applicants_per_hour %>
+      <p class="mt-1 text-[0.75rem] tnum text-faint"><%= posting.applicants_per_hour %> bids an hour</p>
+    <% end %>
+  </div>
+
+  <div class="col-start-2 md:col-start-auto md:text-right">
+    <% if posting.status == "generation_failed" %>
+      <%= link_to "Failed, see why", job_posting_path(posting), class: "text-[0.8125rem] font-semibold text-signal hover:underline" %>
+    <% elsif posting.proposal_ready? %>
+      <%= link_to job_posting_path(posting), class: "chip chip-good" do %><%= icon(:check, css: "h-3 w-3") %> Ready<% end %>
+    <% elsif posting.generating? %>
+      <span class="inline-flex items-center gap-2 text-[0.8125rem] text-muted"><span class="ping"></span> Writing</span>
+    <% else %>
+      <%= button_to "Write one", generate_job_posting_path(posting), class: "btn btn-secondary btn-sm", form: { class: "inline-block" } %>
+    <% end %>
+  </div>
+</div>

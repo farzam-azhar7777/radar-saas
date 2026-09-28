@@ -1,0 +1,17 @@
+<% content_for :title, "#{@step.rail} - Set up Radar" %>
+<div class="max-w-[46rem]">
+  <div class="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-muted">
+    <span class="hidden lg:inline">Step <%= Onboarding.number(@step.key) %> of <%= Onboarding.steps.size %></span>
+    <% if @step.skippable? %><span class="chip">Optional</span><% end %>
+    <% status = Onboarding.status(@step.key) %>
+    <% if status == :done %><span class="chip chip-good"><%= icon(:check, css: "h-3 w-3") %> Done</span>
+    <% elsif status == :skipped %><span class="chip chip-outline">Skipped</span>
+    <% end %>
+  </div>
+  <h1 class="title-xl mt-3 text-balance"><%= @step.title %></h1>
+  <p class="lede mt-3"><%= @step.why %></p>
+</div>
+
+<div class="mt-9">
+  <%= render "setup/steps/#{@step.key}" %>
+</div>

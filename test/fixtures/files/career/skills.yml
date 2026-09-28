@@ -1,0 +1,15 @@
+# A small, invented career for the test suite. Real enough to score against.
+languages:
+  - { name: Ruby }
+  - { name: TypeScript }
+frameworks:
+  - { name: Ruby on Rails }
+  - { name: Hotwire (Turbo + Stimulus) }
+  - { name: Next.js }
+  - { name: React }
+databases:
+  - { name: PostgreSQL }
+  - { name: Redis }
+libraries:
+  - { name: Sidekiq }
+  - { name: Stripe (Checkout, Subscriptions, Connect) }

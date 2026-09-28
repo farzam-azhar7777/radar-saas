@@ -1,0 +1,11 @@
+projects:
+  - file: ledgerline.yml
+    name: Ledgerline
+    one_liner: Multi-tenant Rails billing platform
+    tags: [rails, multi-tenant, stripe, sidekiq, postgresql, saas]
+    relevance: [payments, multi-tenant, background-jobs]
+  - file: fieldkit.yml
+    name: Fieldkit
+    one_liner: Next.js field-service dashboard
+    tags: [nextjs, react, typescript]
+    relevance: [dashboards, real-time]

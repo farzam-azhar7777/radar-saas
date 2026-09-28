@@ -1,0 +1,22 @@
+<%# locals: project. The one editor for a write-up, drafted or accepted. %>
+<% d = project.draft %>
+<%= form_with url: setup_knowledge_project_path(project), method: :patch, scope: :project do |f| %>
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <%= f.label :name, "Name clients know it by", class: "field-label text-[0.8125rem]", for: "ename-#{project.id}" %>
+      <%= f.text_field :name, value: project.name, id: "ename-#{project.id}", class: "input !py-1.5", required: true %>
+    </div>
+    <div>
+      <%= f.label :client, "Client", class: "field-label text-[0.8125rem]", for: "eclient-#{project.id}" %>
+      <%= f.text_field :client, value: project.client || d["client"], id: "eclient-#{project.id}", class: "input !py-1.5" %>
+    </div>
+    <div>
+      <%= f.label :url, "Public link", class: "field-label text-[0.8125rem]", for: "eurl-#{project.id}" %>
+      <%= f.url_field :url, value: project.url || d["url"], id: "eurl-#{project.id}", class: "input !py-1.5", placeholder: "https://" %>
+    </div>
+  </div>
+  <label class="field-label mt-4 text-[0.8125rem]" for="eyaml-<%= project.id %>">The write-up</label>
+  <%= f.text_area :draft_yaml, value: project.draft_yaml, id: "eyaml-#{project.id}", rows: 16, class: "textarea font-mono text-[0.78rem] leading-relaxed", spellcheck: false %>
+  <p class="field-hint">This is the file proposals read. Change any line; keep the indentation.<%= " Saving updates your career folder straight away." if project.status == "accepted" %></p>
+  <button class="btn btn-secondary btn-sm mt-3">Save changes</button>
+<% end %>

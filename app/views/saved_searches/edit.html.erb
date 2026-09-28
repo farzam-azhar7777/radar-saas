@@ -1,0 +1,4 @@
+<% content_for :title, "Edit %s - Radar" % @search.name %>
+<%= link_to saved_searches_path, class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> Searches<% end %>
+<h1 class="title mt-3 mb-6">Edit <%= @search.name %></h1>
+<%= render "form" %>

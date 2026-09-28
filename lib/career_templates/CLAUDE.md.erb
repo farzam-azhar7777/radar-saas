@@ -1,0 +1,82 @@
+# <%= p.full_name %>'s career folder
+
+Radar writes Upwork proposals for <%= p.first_name %> from the files in this folder. It
+was built by Radar's setup from <%= p.first_name %>'s own profile and work history. Read
+this file first, then `writing-voice.md`, `profile.yml`, `skills.yml` and
+`projects/_index.yml`.
+
+## File map
+
+- `profile.yml` - identity, contact links, rate, availability
+- `skills.yml` - languages, frameworks, databases, tools, each with the evidence behind it
+- `projects/_index.yml` - every project: file, name, one_liner, tags, relevance
+- `projects/<slug>.yml` - one per project, the detail to quote from
+- `writing-voice.md` - <%= p.first_name %>'s own writing. Match it.
+- `templates/` - proposal structures to follow when a search names one
+- `applications/` - proposals <%= p.first_name %> actually sent
+
+## Rules (non-negotiable)
+
+- **Never invent** experience, dates, numbers, employers, clients or claims that
+  are not in these files. A shorter proposal beats one with a made-up fact.
+- **Name projects the way the client would know them.** Use each project's
+  `name` field, never a folder or repository name.
+- **One concrete project detail beats a generic claim.** Always.
+- **Match the voice** in `writing-voice.md`. Short, concrete, human. No "I am
+  writing to express my interest", no buzzwords (leverage, synergy, robust,
+  cutting-edge), no emojis unless the samples use them, no exclamation marks.
+- **Omit when missing.** If a template asks for something these files do not
+  contain (a URL, a rate, a credential), drop the whole sentence. Never leave a
+  placeholder like `[link]` or `{...}`.
+- **Sign as <%= p.first_name %>.**
+
+## Established facts about <%= p.first_name %>
+
+- **Name:** <%= p.full_name %><% if p.preferred_name.present? && p.preferred_name != p.full_name.to_s.split.first %> (goes by <%= p.preferred_name %>)<% end %>
+- **Title:** <%= p.title %>
+<% if p.location_label.present? -%>
+- **Location:** <%= p.location_label %><%= ", #{p.timezone_label}" if p.timezone_label %>
+<% end -%>
+<% if p.languages_list.any? -%>
+- **Languages:** <%= p.languages_list.join(", ") %>
+<% end -%>
+<% if p.years_experience.present? -%>
+- **Experience:** <%= p.years_experience %>+ years
+<% end -%>
+<% if p.hourly_rate.present? -%>
+- **Rate:** $<%= p.hourly_rate.to_i == p.hourly_rate ? p.hourly_rate.to_i : p.hourly_rate %>/hr
+<% end -%>
+<% if p.hours_per_week.present? || p.availability.present? -%>
+- **Availability:** <%= [ ("#{p.hours_per_week}h a week" if p.hours_per_week.present?), p.availability.presence ].compact.join(", ") %>
+<% end -%>
+<% if p.response_time.present? -%>
+- **Response time:** <%= p.response_time %>
+<% end -%>
+<% if p.credentials_line.present? -%>
+- **Standing:** <%= p.credentials_line %>
+<% end -%>
+<% if p.summary.present? -%>
+
+<%= p.summary.strip %>
+<% end -%>
+
+## Contact links
+
+<% if p.upwork_url.present? -%>
+- **Upwork:** <%= p.upwork_url %> - never link it inside a proposal. Upwork attaches the profile itself.
+<% end -%>
+<% if p.github_url.present? -%>
+- **GitHub:** <%= p.github_url %><% if p.github_note.present? %> - when sharing it, include this: "<%= p.github_note.strip %>"<% end %>
+<% end -%>
+<% if p.linkedin_url.present? -%>
+- **LinkedIn:** <%= p.linkedin_url %>
+<% end -%>
+<% if p.website_url.present? -%>
+- **Website:** <%= p.website_url %>
+<% end -%>
+<% if p.portfolio_url.present? -%>
+- **Portfolio:** <%= p.portfolio_url %>
+<% end -%>
+<% if [ p.upwork_url, p.github_url, p.linkedin_url, p.website_url, p.portfolio_url ].all?(&:blank?) -%>
+None on file. Do not invent or promise any.
+<% end -%>

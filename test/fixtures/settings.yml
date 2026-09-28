@@ -1,0 +1,4 @@
+# Most of the suite tests a finished install. Setup tests clear this.
+setup_completed:
+  key: setup.completed_at
+  value: "2026-09-25T10:00:00+05:00"

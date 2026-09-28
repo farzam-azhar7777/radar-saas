@@ -1,0 +1,180 @@
+<% proposal = posting.latest_proposal %>
+<% writing = posting.generating? %>
+<% parts = proposal&.body.present? ? proposal.ensure_sections!.to_a : [] %>
+<% answers = parts.select(&:answer?) %>
+<% letter_parts = parts - answers %>
+<%# One thing at a time. A part rewritten while the whole proposal is being
+    rewritten would build its new version from a parent about to be replaced. %>
+<% locked = writing || parts.any?(&:rewriting?) %>
+<div class="space-y-5">
+  <section class="panel overflow-hidden">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-rule px-6 py-4">
+      <h2 class="heading">Your proposal</h2>
+      <% if proposal %>
+        <span class="chip tnum">Version <%= proposal.version %></span>
+        <% if writing %><span class="chip chip-outline">Rewriting</span><% end %>
+        <% if proposal.template_name.present? %><span class="text-[0.8125rem] text-muted"><%= proposal.template_name.tr("-", " ").capitalize %></span><% end %>
+        <span class="ml-auto text-[0.8125rem] tnum text-muted"><%= proposal.word_count %> words</span>
+        <% if proposal.checks.present? %>
+          <span class="chip <%= proposal.to_fix.any? ? 'chip-signal' : 'chip-good' %>" title="<%= (proposal.to_fix + proposal.notes).join(' | ') %>">
+            <%= proposal.to_fix.any? ? "#{proposal.to_fix.size} to fix" : "Checks pass" %><%= ", #{pluralize(proposal.notes.size, 'note')}" if proposal.notes.any? %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if writing %>
+      <%= render "job_postings/generation_status", posting: posting, proposal: proposal %>
+    <% end %>
+
+    <% if proposal&.body.present? %>
+      <% if writing %>
+        <p class="border-b border-rule px-6 py-2.5 text-[0.8125rem] text-muted">Version <%= proposal.version %> below is still yours to copy. It is replaced the moment the rewrite lands.</p>
+      <% end %>
+      <%# The preview is the cover letter box, not the whole blob. %>
+      <div class="border-b border-rule bg-surface px-6 py-4">
+        <p class="hint">What the client sees in their list, before they click</p>
+        <p class="mt-1 text-[0.9rem] leading-relaxed"><%= proposal.preview %><span class="text-faint"> … View more</span></p>
+      </div>
+
+      <% if answers.any? %>
+        <%# Upwork gives each screening question its own box. %>
+        <div class="border-b border-rule">
+          <p class="px-6 pb-1 pt-4 text-[0.8125rem] text-muted">
+            <span class="font-semibold text-ink"><%= pluralize(answers.size, "screening answer") %>.</span> Each goes in its own box on Upwork, not in the cover letter.
+          </p>
+          <%= render partial: "job_postings/proposal_part", collection: answers, as: :part, locals: { posting: posting, locked: locked } %>
+        </div>
+      <% end %>
+
+      <div>
+        <p class="px-6 pb-1 pt-4 text-[0.8125rem] text-muted">
+          <span class="font-semibold text-ink">Cover letter.</span> <%= answers.any? ? "This is the part the client previews." : "All of it goes in the one box." %>
+        </p>
+        <%= render partial: "job_postings/proposal_part", collection: letter_parts, as: :part, locals: { posting: posting, locked: locked } %>
+
+        <%# The clipboard reads this value, not the cards, so what is pasted is the
+            assembled letter with its separators. %>
+        <div class="flex flex-wrap items-center gap-2 border-t border-rule bg-surface px-6 py-4"
+             data-controller="clipboard" data-clipboard-text-value="<%= proposal.cover_letter_text %>">
+          <button data-action="clipboard#copy" data-clipboard-target="button" class="btn btn-primary"><%= icon(:copy) %> <span>Copy cover letter</span></button>
+          <%= link_to posting.upwork_url, target: "_blank", rel: "noopener", class: "btn btn-secondary" do %>Open on Upwork to paste it <%= icon(:external) %><% end %>
+          <% if (chars = proposal.checks["characters"]).present? %>
+            <span class="text-[0.8125rem] tnum <%= chars.to_i > ProposalCheck::MAX_CHARS ? 'font-semibold text-signal' : 'text-faint' %>"><%= number_with_delimiter(chars) %> of <%= number_with_delimiter(ProposalCheck::MAX_CHARS) %> characters</span>
+          <% end %>
+          <%= button_to "Not interested", dismiss_job_posting_path(posting), class: "btn btn-ghost btn-sm", form: { class: "ml-auto" } %>
+        </div>
+      </div>
+    <% elsif writing %>
+      <%# The status above is the whole state. Nothing else to show yet. %>
+    <% elsif posting.status == "generation_failed" %>
+      <div class="px-6 py-12 text-center">
+        <p class="heading text-signal">Writing failed</p>
+        <% if posting.generation_error.present? %>
+          <p class="mx-auto mt-2 max-w-lg break-words text-left text-[0.8125rem] leading-relaxed text-muted"><%= posting.generation_error.truncate(400) %></p>
+        <% end %>
+        <p class="hint mt-2">Nothing was saved. Trying again writes it from the start.</p>
+        <%= button_to "Try again", generate_job_posting_path(posting), data: { turbo_submits_with: "Starting…" }, class: "btn btn-primary mt-4", form: { class: "inline-block" } %>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <% if posting.location_mismatch? %>
+          <p class="heading">Not written</p>
+          <p class="hint mx-auto mt-1.5 max-w-sm">The client restricted this to <span class="font-semibold text-ink"><%= posting.location_label %></span>. Nothing was spent. Write one anyway if you want to bid.</p>
+        <% else %>
+          <p class="heading">No proposal yet</p>
+          <p class="hint mx-auto mt-1.5 max-w-sm">
+            <%= posting.saved_search&.auto_generate? ? "This search writes automatically, but today's limit is reached." : "This search tells you and waits. Write one when you want it." %>
+          </p>
+        <% end %>
+        <%= button_to generate_job_posting_path(posting), data: { turbo_submits_with: "Starting…" }, class: "btn btn-primary mt-4", form: { class: "inline-block" } do %><%= icon(:pen) %> Write the proposal<% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <%# A failed part rewrite leaves the proposal intact, so it cannot use the
+      whole-pane failure state above. It still has to be visible. %>
+  <% if posting.generation_error.present? && proposal&.body.present? && posting.status != "generation_failed" %>
+    <div class="notice notice-signal"><%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %><div><%= posting.generation_error.truncate(300) %></div></div>
+  <% end %>
+
+  <%# "Fix" is something Upwork or the client will punish; a note is a writing target to take or leave. %>
+  <% if proposal&.body.present? && proposal.to_fix.any? %>
+    <section class="notice notice-signal">
+      <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+      <div>
+        <p class="font-semibold">Fix before you send</p>
+        <ul class="mt-1 list-disc space-y-1 pl-5"><% proposal.to_fix.each do |f| %><li><%= f %></li><% end %></ul>
+        <p class="mt-2 opacity-80"><%= proposal.attempts.to_i > 1 ? "Radar tried to fix this and could not in time." : "Radar ran out of time before it could fix this." %> Rewrite the part it is in, or edit it after you paste.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <% if proposal&.body.present? && proposal.notes.any? %>
+    <section class="notice notice-warn">
+      <div>
+        <p class="font-semibold">Notes</p>
+        <ul class="mt-1 list-disc space-y-1 pl-5"><% proposal.notes.each do |n| %><li><%= n %></li><% end %></ul>
+      </div>
+    </section>
+  <% end %>
+
+  <% if proposal&.body.present? && proposal.auto_fixed.any? %>
+    <p class="px-1 text-[0.8125rem] text-faint">Fixed automatically: <%= proposal.auto_fixed.map { |f| f.sub(/\A./, &:downcase) }.join("; ") %>.</p>
+  <% end %>
+
+  <% if proposal&.body.present? %>
+    <section class="panel panel-pad <%= "opacity-60" if locked %>">
+      <h2 class="heading">Rewrite the whole thing</h2>
+      <p class="hint mt-1">To change one part, use <span class="font-semibold text-ink">Rewrite</span> on that part. It is faster and costs a fraction.</p>
+      <%= form_with url: regenerate_job_posting_path(posting), method: :post, class: "mt-4 space-y-3" do |f| %>
+        <%= f.text_area :feedback, rows: 3, placeholder: "Start again and lead with #{example_project}. Too long throughout.", class: "textarea !mt-0", "aria-label": "What to change" %>
+        <%# Two submit buttons, not a checkbox: the choice is the action. %>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= tag.button locked ? "Already rewriting" : "Rewrite all of it", type: "submit", name: "scope", value: "once", disabled: locked,
+                data: { turbo_submits_with: "Starting…" }, title: "Writes every part again. Applies your note to this proposal only.", class: "btn btn-primary" %>
+          <%= tag.button "Rewrite and remember", type: "submit", name: "scope", value: "remember", disabled: locked,
+                data: { turbo_submits_with: "Starting…" }, title: "Also turns your note into a rule for every future proposal.", class: "btn btn-secondary" %>
+        </div>
+        <p class="hint">Remember only when it should change every future proposal. Earlier versions are kept either way.</p>
+      <% end %>
+
+      <% if @templates.present? %>
+        <div class="mt-5 border-t border-rule pt-4">
+          <p class="hint mb-2.5">Or rewrite it in another shape</p>
+          <div class="flex flex-wrap gap-2">
+            <% @templates.each do |t| %>
+              <%= button_to t.tr("-", " ").capitalize, template_job_posting_path(posting), method: :patch, params: { template_name: t },
+                    disabled: locked, data: { turbo_submits_with: "Starting…" }, class: "btn btn-secondary btn-sm" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </section>
+
+    <section class="panel panel-pad">
+      <h2 class="heading">Sent it?</h2>
+      <p class="hint mt-1">Files it under Applied and in your career folder, so you can record what the client did.</p>
+      <%= form_with url: mark_applied_job_posting_path(posting), method: :post, class: "mt-4 flex flex-wrap items-center gap-2" do |f| %>
+        <%= f.text_field :rate_proposed, placeholder: "Rate you bid, e.g. $30/hr", class: "input !mt-0 w-56", "aria-label": "Rate you bid" %>
+        <%= f.button class: "btn btn-primary" do %><%= icon(:send) %> Mark as applied<% end %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if @versions && @versions.size > 1 %>
+    <section class="panel panel-pad">
+      <h2 class="heading">Earlier versions</h2>
+      <div class="mt-3 divide-y divide-rule">
+        <% @versions.drop(1).each do |v| %>
+          <details class="py-2.5">
+            <summary class="cursor-pointer text-[0.875rem] text-muted hover:text-ink">
+              Version <%= v.version %>, <%= v.word_count %> words<%= ", #{v.rewritten_section_label} only" if v.part_rewrite? %><%= ": #{v.feedback.truncate(60)}" if v.feedback.present? %>
+            </summary>
+            <pre class="mt-2 whitespace-pre-wrap rounded-[10px] bg-surface p-4 font-sans text-[0.8125rem] leading-relaxed text-muted"><%= v.body %></pre>
+          </details>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

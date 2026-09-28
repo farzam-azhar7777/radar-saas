@@ -1,0 +1,69 @@
+<% d = project.draft %>
+<article id="project-<%= project.id %>" class="panel">
+  <div class="px-5 pt-5">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h3 class="heading"><%= project.name %></h3>
+      <% [ d["period"], d["role"], (d["client"].present? ? "for #{d['client']}" : nil), (d["commits"].present? ? "#{d['commits']} commits" : nil) ].compact.each do |bit| %>
+        <span class="text-[0.8125rem] text-muted"><%= bit %></span>
+      <% end %>
+    </div>
+    <% if d["one_liner"].present? %><p class="mt-2 text-[0.95rem]"><%= d["one_liner"] %></p><% end %>
+  </div>
+
+  <% if project.open_questions.any? %>
+    <div class="mx-5 mt-4 rounded-[10px] bg-warn-soft px-4 py-3 text-[0.85rem] text-warn">
+      <p class="font-semibold">Radar could not tell from the code</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5">
+        <% project.open_questions.first(6).each do |q| %><li><%= q %></li><% end %>
+      </ul>
+      <p class="mt-1.5 text-warn/80">Answer what you can by editing the write-up below. Anything left empty is simply never claimed.</p>
+    </div>
+  <% end %>
+
+  <div class="grid gap-5 px-5 py-4 text-[0.875rem] leading-relaxed md:grid-cols-2">
+    <% if d["your_scope"].present? %>
+      <div class="md:col-span-2">
+        <p class="font-semibold">What you did</p>
+        <p class="mt-1 text-muted"><%= d["your_scope"] %></p>
+      </div>
+    <% end %>
+    <% if Array(d["highlights"]).any? %>
+      <div class="md:col-span-2">
+        <p class="font-semibold">Highlights a proposal can quote</p>
+        <ul class="mt-1 list-disc space-y-1 pl-5 text-muted">
+          <% d["highlights"].each do |h| %><li><%= h %></li><% end %>
+        </ul>
+      </div>
+    <% end %>
+    <% if Array(d["tags"]).any? %>
+      <div>
+        <p class="font-semibold">Matches jobs about</p>
+        <div class="mt-1.5 flex flex-wrap gap-1.5"><% (Array(d["tags"]) + Array(d["relevance"])).uniq.first(16).each do |t| %><span class="chip"><%= t %></span><% end %></div>
+      </div>
+    <% end %>
+    <% if Array(d["stack"]).any? %>
+      <div>
+        <p class="font-semibold">Built with</p>
+        <p class="mt-1 text-muted"><%= Array(d["stack"]).join(", ") %></p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="border-t border-rule px-5 py-3.5" data-controller="reveal">
+    <div class="flex flex-wrap items-center gap-2">
+      <%= button_to setup_knowledge_accept_path(project), class: "btn btn-primary btn-sm" do %><%= icon(:check) %> Accept<% end %>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="reveal#toggle" data-reveal-target="toggle"><%= icon(:pen) %> Edit</button>
+      <details class="contents">
+        <summary class="btn btn-ghost btn-sm list-none"><%= icon(:refresh) %> Rewrite</summary>
+        <%= form_with url: setup_knowledge_rewrite_path(project), class: "mt-3 w-full" do %>
+          <textarea name="note" rows="2" class="textarea" placeholder="Lead with the payments work. The client was Acme Health."></textarea>
+          <button class="btn btn-secondary btn-sm mt-2">Rewrite with this note</button>
+        <% end %>
+      </details>
+      <%= button_to "Leave out", setup_knowledge_exclude_path(project), class: "btn btn-ghost btn-sm", form: { class: "ml-auto" } %>
+    </div>
+    <div data-reveal-target="panel" hidden class="mt-4">
+      <%= render "setup/knowledge/editor", project: project %>
+    </div>
+  </div>
+</article>

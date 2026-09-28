@@ -1,0 +1,38 @@
+<% content_for :title, "Passed over - Radar" %>
+<h1 class="title">Passed over</h1>
+<p class="lede mt-1">Jobs Radar decided were not worth your time, and the reason for each. If one should have reached you, move it to the inbox; the weakest scores show what to change in the search.</p>
+
+<%= render "job_postings/toolbar", path: filtered_path %>
+
+<% if @postings.empty? %>
+  <div class="panel mt-6 px-8 py-14 text-center">
+    <p class="heading"><%= @query.present? ? "Nothing passed over matches \"#{@query}\"" : "Nothing passed over yet" %></p>
+    <p class="hint mt-1">Jobs that match your searches but score below the inbox line appear here.</p>
+  </div>
+<% else %>
+  <div class="panel mt-5 divide-y divide-rule overflow-hidden">
+    <% @postings.each do |posting| %>
+      <div class="grid grid-cols-[3.5rem_1fr] gap-x-5 gap-y-3 px-5 py-4 md:grid-cols-[3.5rem_1fr_auto] md:items-start">
+        <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
+        <div class="min-w-0">
+          <p class="truncate font-semibold"><%= posting.title %></p>
+          <p class="mt-1 flex flex-wrap gap-x-4 text-[0.8125rem] text-muted">
+            <span><%= posting.budget_label %></span>
+            <% if posting.client_location %><span><%= posting.client_location %></span><% end %>
+            <% if posting.saved_search %><span><%= posting.saved_search.name %></span><% end %>
+          </p>
+          <ul class="mt-2.5 space-y-1">
+            <% Array(posting.score_reasons).sort_by { |r| r["points"].to_i - r["max"].to_i }.first(3).each do |r| %>
+              <li class="text-[0.8125rem] text-muted">
+                <span class="font-semibold text-ink"><%= r["key"].to_s.tr("_", " ").capitalize %></span>
+                <span class="tnum"><%= r["points"] %> of <%= r["max"] %>.</span>
+                <%= r["note"].to_s.truncate(90) %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        <%= button_to "Move to inbox", promote_job_posting_path(posting), class: "btn btn-secondary btn-sm", form: { class: "col-start-2 md:col-start-auto" } %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

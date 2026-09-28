@@ -1,0 +1,86 @@
+<% suggested = "https://localhost:#{Radar.port}/oauth/upwork/callback" %>
+<div class="max-w-[46rem] space-y-8">
+  <details class="panel group" <%= "open" unless Upwork::Client.configured? %>>
+    <summary class="flex cursor-pointer items-center gap-3 px-5 py-4">
+      <%= icon(:key, css: "h-5 w-5 text-brand") %>
+      <span class="font-semibold">How to get a key from Upwork</span>
+      <span class="ml-auto text-[0.8125rem] text-muted group-open:hidden">Show</span>
+    </summary>
+    <ol class="space-y-5 border-t border-rule px-5 py-5 text-[0.9rem] leading-relaxed">
+      <li class="flex gap-3.5">
+        <span class="step-mark">1</span>
+        <div>
+          <p class="font-semibold">Check you can apply</p>
+          <p class="hint mt-0.5">Upwork issues keys to accounts with a verified identity and payment method, $25,000 lifetime earnings or spend, and a Job Success Score of at least 90%. Review usually takes about two business days.</p>
+        </div>
+      </li>
+      <li class="flex gap-3.5">
+        <span class="step-mark">2</span>
+        <div>
+          <p class="font-semibold">Open Upwork's API key request</p>
+          <p class="hint mt-0.5"><a class="link" href="https://www.upwork.com/developer/keys/apply" target="_blank" rel="noopener">upwork.com/developer/keys/apply</a>, signed in to your own account. Give it any title, for example "Radar for <%= Profile.first_name == "the freelancer" ? "me" : Profile.first_name %>", and choose Web.</p>
+        </div>
+      </li>
+      <li class="flex gap-3.5">
+        <span class="step-mark">3</span>
+        <div>
+          <p class="font-semibold">Set the Callback URL</p>
+          <p class="hint mt-0.5">Upwork requires an address starting with https://. It does not have to load: after you approve, Radar reads the code from the address you land on. Try this one first:</p>
+          <div class="mt-2 flex items-center gap-2" data-controller="clipboard" data-clipboard-text-value="<%= suggested %>">
+            <code class="min-w-0 flex-1 truncate rounded-[8px] bg-sunk px-3 py-2 text-[0.82rem]"><%= suggested %></code>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="clipboard#copy" data-clipboard-target="button">Copy</button>
+          </div>
+          <p class="hint mt-2">If Upwork will not accept it, use any https address on a site you own. Upwork rejects plain http://localhost.</p>
+        </div>
+      </li>
+      <li class="flex gap-3.5">
+        <span class="step-mark">4</span>
+        <div>
+          <p class="font-semibold">Tick exactly these four permissions</p>
+          <ul class="mt-1.5 space-y-1">
+            <% [ "Read marketplace Job Postings", "Job Details Entities - Read-Only Access", "Common Entities - Read-Only Access", "View UserDetails" ].each do |perm| %>
+              <li class="flex items-center gap-2"><%= icon(:check, css: "h-4 w-4 text-brand") %> <%= perm %></li>
+            <% end %>
+          </ul>
+          <p class="hint mt-2">Leave everything else unticked, especially Submit Proposal, Messaging and anything with Write in its name. Read-only keys are approved most easily, and Radar never needs more.</p>
+        </div>
+      </li>
+      <li class="flex gap-3.5">
+        <span class="step-mark">5</span>
+        <div>
+          <p class="font-semibold">Copy the Key and the Secret into the form below</p>
+          <p class="hint mt-0.5">Upwork shows them on your API keys page once approved. Keys expire after the rotation period you choose, 12 months at most.</p>
+        </div>
+      </li>
+    </ol>
+  </details>
+
+  <%= form_with url: setup_upwork_key_path, method: :patch, id: "upwork-key-form", class: "space-y-5" do %>
+    <div>
+      <label class="field-label" for="upwork_client_id">Key (Client ID)</label>
+      <input class="input font-mono text-[0.85rem]" id="upwork_client_id" name="upwork[client_id]" value="<%= @saved[:client_id] %>" autocomplete="off" spellcheck="false" required>
+    </div>
+    <div>
+      <label class="field-label" for="upwork_client_secret">Secret</label>
+      <input class="input font-mono text-[0.85rem]" id="upwork_client_secret" name="upwork[client_secret]" type="password" autocomplete="new-password" spellcheck="false"
+             placeholder="<%= Credential.masked('upwork.client_secret') ? "Saved: #{Credential.masked('upwork.client_secret')}. Leave empty to keep it." : '' %>">
+    </div>
+    <div>
+      <label class="field-label" for="upwork_redirect_uri">Callback URL</label>
+      <input class="input font-mono text-[0.85rem]" id="upwork_redirect_uri" name="upwork[redirect_uri]" value="<%= @saved[:redirect_uri] || suggested %>" autocomplete="off" spellcheck="false" required>
+      <p class="field-hint">Exactly as you entered it on Upwork, character for character.</p>
+    </div>
+    <details>
+      <summary class="cursor-pointer text-[0.8125rem] font-semibold text-muted hover:text-ink">Agency account</summary>
+      <div class="mt-3">
+        <label class="field-label" for="upwork_tenant_id">Tenant ID</label>
+        <input class="input font-mono text-[0.85rem]" id="upwork_tenant_id" name="upwork[tenant_id]" value="<%= @saved[:tenant_id] %>" autocomplete="off">
+        <p class="field-hint">Only if you work under an agency and Upwork asks for one. Most people leave this empty.</p>
+      </div>
+    </details>
+    <p class="hint flex items-center gap-2"><%= icon(:key, css: "h-4 w-4") %> Stored encrypted on this computer. Never shown again, never sent anywhere but Upwork.</p>
+  <% end %>
+</div>
+
+<%= render "setup/steps/footer", step: @step,
+      primary: tag.button(Upwork::Client.configured? ? "Save and continue" : "Save key", form: "upwork-key-form", class: "btn btn-primary btn-lg") %>

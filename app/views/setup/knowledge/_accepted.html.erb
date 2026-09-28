@@ -1,0 +1,31 @@
+<%# locals: accepted. Shown whenever there are any, with or without a scan. %>
+<% if accepted.any? %>
+    <section>
+      <div class="flex items-center gap-3">
+        <h2 class="heading">In your career folder</h2>
+        <span class="chip tnum"><%= accepted.size %></span>
+      </div>
+      <p class="hint mt-1">Proposals can cite these now.</p>
+      <ul class="panel mt-4 divide-y divide-rule">
+        <% accepted.each do |project| %>
+          <li id="project-<%= project.id %>" class="px-4 py-3" data-controller="reveal">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <%= icon(:check, css: "h-4 w-4 text-brand") %>
+              <div class="min-w-0 flex-1">
+                <p class="truncate font-semibold"><%= project.name %><% if project.client.present? %> <span class="font-normal text-muted">for <%= project.client %></span><% end %></p>
+                <p class="truncate text-[0.8125rem] text-muted"><%= project.draft["one_liner"] %></p>
+              </div>
+              <% if (fresh = project.new_commits_since_written).positive? %>
+                <%= button_to "#{fresh} new commits, rewrite", setup_knowledge_rewrite_path(project), class: "btn btn-ghost btn-sm" %>
+              <% end %>
+              <button type="button" class="btn btn-secondary btn-sm" data-action="reveal#toggle" data-reveal-target="toggle"><%= icon(:pen) %> Edit</button>
+              <%= button_to "Take out", setup_knowledge_unaccept_path(project), class: "btn btn-ghost btn-sm" %>
+            </div>
+            <div data-reveal-target="panel" hidden class="mt-4 border-t border-rule pt-4">
+              <%= render "setup/knowledge/editor", project: project %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+<% end %>

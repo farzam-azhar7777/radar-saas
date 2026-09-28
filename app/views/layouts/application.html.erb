@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <title><%= content_for(:title) || "Radar" %></title>
+    <%= render "layouts/head" %>
+    <%= yield :head %>
+  </head>
+
+  <body class="min-h-full font-sans" data-controller="disclosures">
+    <% stats = todays_generation_stats %>
+    <% stalled = PollHealth.stalled? %>
+    <div class="lg:grid lg:min-h-screen lg:grid-cols-[15.5rem_1fr]" data-controller="alerts" data-alerts-url-value="<%= alerts_path %>">
+      <aside class="border-b border-rule px-4 py-3 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-3 lg:py-5">
+        <div class="flex items-center gap-2.5 px-2">
+          <%= link_to root_path, class: "flex items-center gap-2.5" do %>
+            <span class="grid h-8 w-8 place-items-center rounded-[9px] bg-ink text-canvas"><%= icon(:radar, css: "h-[1.05rem] w-[1.05rem]") %></span>
+            <span class="font-display text-[1.15rem] font-semibold tracking-tight">Radar</span>
+          <% end %>
+          <%= button_to "Check now", poll_path, class: "btn btn-secondary btn-sm", form: { class: "ml-auto lg:hidden" } %>
+        </div>
+
+        <nav class="-mx-1 mt-3 flex gap-1 overflow-x-auto pb-1 lg:mx-0 lg:mt-6 lg:block lg:space-y-0.5 lg:overflow-visible lg:pb-0" aria-label="Main">
+          <%= nav_link "Inbox", root_path, :inbox, count: JobPosting.inbox.count, match: "/jobs" %>
+          <%= nav_link "Passed over", filtered_path, :filter, count: JobPosting.filtered_out.count %>
+          <%= nav_link "Applied", applied_path, :send, count: JobPosting.applied.count %>
+          <%= nav_link "Searches", saved_searches_path, :search, match: "/searches" %>
+          <%= nav_link "What it learned", lessons_path, :spark, count: Lesson.active.count %>
+          <%= nav_link "Settings", settings_path, :settings %>
+        </nav>
+
+        <div class="mt-auto hidden space-y-4 px-2 pt-6 lg:block">
+          <% polling = Setting.auto_polling? %>
+          <div class="flex items-start gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 text-[0.8125rem] font-semibold">
+                <span class="ping <%= 'ping-off' unless polling && !stalled %> <%= 'ping-signal' if polling && stalled %>"></span>
+                <% if !polling %>Paused<% elsif stalled %>Not watching<% else %>Watching Upwork<% end %>
+              </div>
+              <p class="mt-0.5 text-[0.8125rem] text-muted">
+                <% if !polling %>Automatic checks are off
+                <% elsif stalled %>Polling has stopped. Restarting it.
+                <% elsif (label = next_check_label) %>Next check <%= label %>
+                <% else %>First check within a minute<% end %>
+              </p>
+            </div>
+            <%= button_to (polling ? "Pause" : "Resume"), toggle_auto_polling_path,
+                  class: "btn btn-sm #{polling ? 'btn-ghost' : 'btn-primary'}",
+                  title: polling ? "Stop checking Upwork automatically. Check now still works." : "Start checking Upwork every few minutes again." %>
+          </div>
+
+          <div>
+            <div class="flex items-baseline justify-between text-[0.8125rem]">
+              <span class="text-muted">Written today</span>
+              <span class="tnum font-semibold <%= 'text-signal' if stats[:count] >= stats[:cap] %>"><%= stats[:count] %> of <%= stats[:cap] %></span>
+            </div>
+            <div class="meter mt-1.5"><i style="width: <%= [ (stats[:count] * 100.0 / [ stats[:cap], 1 ].max).round, 100 ].min %>%"></i></div>
+            <p class="mt-1.5 text-[0.75rem] tnum text-faint"><%= ApiUsage.used_today %> Upwork calls today</p>
+          </div>
+
+          <%= button_to toggle_auto_generate_path, class: "flex w-full items-center gap-3 rounded-[10px] border border-rule bg-paper px-3 py-2.5 text-left hover:border-rule-strong",
+                title: "When off, jobs still arrive and alert you, but nothing is written until you ask" do %>
+            <span class="relative h-5 w-9 flex-none rounded-full transition <%= Setting.auto_generate? ? 'bg-brand' : 'bg-rule-strong' %>">
+              <span class="absolute top-0.5 h-4 w-4 rounded-full bg-paper shadow transition-all <%= Setting.auto_generate? ? 'left-[1.1rem]' : 'left-0.5' %>"></span>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-[0.8125rem] font-semibold">Write automatically</span>
+              <span class="block text-[0.75rem] text-muted"><%= Setting.auto_generate? ? "On for automatic searches" : "Off, alerts only" %></span>
+            </span>
+          <% end %>
+
+          <div class="flex gap-2">
+            <%= button_to poll_path, class: "btn btn-secondary btn-sm w-full", form: { class: "flex-1" } do %><%= icon(:refresh) %> Check now<% end %>
+          </div>
+          <button data-alerts-target="button" data-action="alerts#enable" class="btn btn-ghost btn-sm w-full justify-start !text-brand">
+            Turn on browser alerts
+          </button>
+        </div>
+      </aside>
+
+      <div class="min-w-0">
+        <%# Proposals that finished writing, until opened or dismissed. %>
+        <div data-alerts-target="ready" hidden class="border-b border-rule bg-brand-soft"></div>
+        <template data-alerts-target="readyRow">
+          <div class="flex items-center gap-3 px-6 py-2.5 text-[0.875rem] text-brand lg:px-10">
+            <%= icon(:check, css: "h-4 w-4 flex-none") %>
+            <span class="font-semibold">Proposal ready</span>
+            <a data-field="link" class="min-w-0 truncate font-semibold underline decoration-brand/40 underline-offset-2 hover:decoration-brand"></a>
+            <span data-field="readiness" class="hidden truncate text-brand/80 sm:inline"></span>
+            <button type="button" data-field="dismiss" aria-label="Dismiss" class="ml-auto rounded p-1 hover:bg-paper/60"><%= icon(:x) %></button>
+          </div>
+        </template>
+
+        <% if stalled %>
+          <div class="border-b border-rule bg-signal-soft px-6 py-2.5 text-[0.875rem] text-signal lg:px-10">
+            <span class="font-semibold">Polling has stopped.</span> <%= PollHealth.message %>
+          </div>
+        <% end %>
+        <% health = GenerationHealth.status %>
+        <% if health != :ok %>
+          <div class="border-b border-rule px-6 py-2.5 text-[0.875rem] lg:px-10 <%= health == :blocked ? 'bg-signal-soft text-signal' : 'bg-warn-soft text-warn' %>">
+            <span class="font-semibold"><%= health == :blocked ? "Writing is broken." : "Some writing failed." %></span> <%= GenerationHealth.message %>
+          </div>
+        <% end %>
+
+        <main class="mx-auto max-w-[80rem] px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
+          <%= render "layouts/flash" %>
+          <%= yield %>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

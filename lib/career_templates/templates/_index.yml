@@ -1,0 +1,16 @@
+# Cover letter templates. Each saved search can pick one, and any proposal can
+# be rewritten in another. They describe structure only; the facts come from
+# the rest of this folder.
+templates:
+  - name: personalised-skills-for-job
+    file: personalised-skills-for-job.md
+    description: Map your skills straight onto their requirements. The strongest default for most posts.
+  - name: my-approach-to-your-job
+    file: my-approach-to-your-job.md
+    description: Authority opening, how you would approach the project, about you, cost and timing close.
+  - name: part-time-full-time-job
+    file: part-time-full-time-job.md
+    description: For part-time or full-time roles, pitching yourself as a team member rather than a gig freelancer.
+  - name: basic-default
+    file: basic-default.md
+    description: Short opening, expertise, examples of your work. For posts nothing else fits.

@@ -1,0 +1,11 @@
+<% if flash[:alert].present? %>
+  <div class="notice notice-signal mb-6" role="alert">
+    <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+    <div><%= flash[:alert] %></div>
+  </div>
+<% elsif flash[:notice].present? %>
+  <div class="notice notice-good mb-6" role="status">
+    <%= icon(:check, css: "mt-0.5 h-4 w-4 flex-none") %>
+    <div><%= flash[:notice] %></div>
+  </div>
+<% end %>

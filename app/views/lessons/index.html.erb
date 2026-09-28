@@ -1,0 +1,88 @@
+<% content_for :title, "What it learned - Radar" %>
+<h1 class="title">What it learned</h1>
+<p class="lede mt-1">Every time you tell Radar what to fix, it can keep the note as a rule. Rules apply to what they are about: your voice everywhere, one shape of proposal, or one search. Edit a rule that went too far, or switch it off.</p>
+
+<%# A thought like "stop using the word platform" should not need a proposal to be said. %>
+<section class="panel panel-pad mt-6">
+  <h2 class="heading">Teach it something</h2>
+  <p class="hint mt-1">Anything that should change how it writes from now on. No proposal is rewritten.</p>
+  <%= form_with url: teach_lessons_path, method: :post, class: "mt-4 space-y-3" do |f| %>
+    <%= f.text_area :body, rows: 3, placeholder: "Lead with a live product, never a stack list. Keep the skills bullets to four.", class: "textarea !mt-0", "aria-label": "The rule" %>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= tag.button "Save it as I wrote it", type: "submit", name: "mode", value: "verbatim", data: { turbo_submits_with: "Saving…" },
+            title: "Becomes a rule straight away, word for word. Costs nothing.", class: "btn btn-primary" %>
+      <%= tag.button "Let Radar word it", type: "submit", name: "mode", value: "distill", data: { turbo_submits_with: "Thinking…" },
+            title: "Claude turns it into one instruction and decides what it applies to.", class: "btn btn-secondary" %>
+      <label class="ml-auto flex items-center gap-2 text-[0.8125rem] text-muted">
+        Applies to
+        <%= f.select :saved_search_id, options_for_select([ [ "Every proposal", "" ] ] + @searches.map { |s| [ s.name, s.id ] }), {}, class: "select !mt-0 !w-auto !py-1.5" %>
+      </label>
+    </div>
+    <p class="hint">"As I wrote it" when you know the exact rule. "Let Radar word it" when it is a complaint rather than an instruction.</p>
+  <% end %>
+</section>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+  <section>
+    <h2 class="heading">Rules it follows</h2>
+    <% if @lessons.empty? %>
+      <div class="panel mt-3 px-7 py-12 text-center">
+        <p class="font-semibold">No rules yet</p>
+        <p class="hint mx-auto mt-1 max-w-sm">Write one above, or say what to fix on any proposal and choose Rewrite and remember.</p>
+      </div>
+    <% else %>
+      <div class="panel mt-3 divide-y divide-rule">
+        <% @lessons.each do |lesson| %>
+          <div class="px-5 py-4 <%= 'opacity-55' unless lesson.active? %>">
+            <div class="mb-2 flex flex-wrap items-center gap-2">
+              <span class="chip <%= lesson.saved_search || lesson.archetype.present? ? 'chip-outline' : '' %>"><%= lesson.scope_label %></span>
+              <% if lesson.times_used.positive? %><span class="text-[0.75rem] tnum text-faint">used <%= lesson.times_used %> times</span><% end %>
+              <% unless lesson.active? %><span class="text-[0.75rem] text-faint">Off</span><% end %>
+              <span class="ml-auto text-[0.75rem] tnum text-faint"><%= lesson.created_at.strftime("%-d %b") %></span>
+            </div>
+            <%= form_with model: lesson, method: :patch, class: "space-y-2.5" do |f| %>
+              <%= f.text_area :body, rows: 2, class: "textarea !mt-0 !min-h-0", "aria-label": "Rule" %>
+              <div class="flex items-center gap-2">
+                <%= f.submit "Save", class: "btn btn-secondary btn-sm" %>
+                <%= button_to lesson.active? ? "Switch off" : "Switch on", lesson_path(lesson), method: :patch, params: { toggle: 1 }, class: "btn btn-ghost btn-sm" %>
+                <%= button_to "Delete", lesson_path(lesson), method: :delete, form: { class: "ml-auto", data: { turbo_confirm: "Delete this rule?" } }, class: "btn btn-ghost btn-sm" %>
+              </div>
+            <% end %>
+            <% if lesson.source_feedback.present? %>
+              <details class="mt-2.5">
+                <summary class="cursor-pointer text-[0.8125rem] text-faint hover:text-muted">What you said</summary>
+                <p class="mt-1.5 border-l-2 border-rule pl-3 text-[0.8125rem] leading-relaxed text-muted"><%= lesson.source_feedback %></p>
+              </details>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <section>
+    <h2 class="heading">Your recent notes</h2>
+    <% if @feedbacks.empty? %>
+      <div class="panel mt-3 px-6 py-10 text-center"><p class="hint">Notes you leave on proposals appear here, with what became of each.</p></div>
+    <% else %>
+      <div class="panel mt-3 divide-y divide-rule">
+        <% @feedbacks.each do |fb| %>
+          <div class="px-5 py-3.5">
+            <p class="text-[0.875rem] leading-relaxed"><%= fb.body %></p>
+            <p class="mt-1.5 flex flex-wrap gap-x-3 text-[0.75rem] text-faint">
+              <span><%= fb.created_at.strftime("%-d %b, %H:%M") %></span>
+              <% if fb.job_posting %><%= link_to fb.job_posting.title.truncate(44), job_posting_path(fb.job_posting), class: "hover:text-ink" %><% end %>
+              <% if fb.status_label %><span class="font-semibold <%= feedback_tone(fb) %>"><%= fb.status_label %></span><% end %>
+            </p>
+            <% if fb.outcome_note.present? %>
+              <p class="mt-1.5 border-l-2 border-rule pl-3 text-[0.8125rem] leading-relaxed text-muted"><%= fb.outcome_note %></p>
+            <% end %>
+            <% if fb.keepable? && !fb.pending? %>
+              <%= button_to "Keep it anyway", keep_note_path(fb), form: { class: "mt-2" }, title: "Adds your note as a rule word for word.", class: "btn btn-secondary btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+</div>

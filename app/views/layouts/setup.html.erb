@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <title><%= content_for(:title) || "Set up Radar" %></title>
+    <%= render "layouts/head" %>
+  </head>
+
+  <body class="min-h-full font-sans" data-controller="disclosures">
+    <%= turbo_stream_from "setup" %>
+    <% current_key = @step&.key %>
+    <div class="lg:grid lg:min-h-screen lg:grid-cols-[18rem_1fr]">
+      <aside class="border-b border-rule px-5 py-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
+        <div class="flex items-center gap-2.5 px-2">
+          <span class="grid h-8 w-8 place-items-center rounded-[9px] bg-ink text-canvas"><%= icon(:radar, css: "h-[1.05rem] w-[1.05rem]") %></span>
+          <span class="font-display text-[1.15rem] font-semibold tracking-tight">Radar</span>
+          <% if Onboarding.complete? %>
+            <%= link_to "Back to Radar", root_path, class: "btn btn-ghost btn-sm ml-auto" %>
+          <% end %>
+        </div>
+
+        <div class="mt-6 px-2">
+          <div class="flex items-baseline justify-between text-[0.8125rem]">
+            <span class="font-semibold">Setup</span>
+            <span class="tnum text-muted"><%= Onboarding.progress %>%</span>
+          </div>
+          <div class="meter mt-2"><i style="width: <%= Onboarding.progress %>%; background: var(--color-brand)"></i></div>
+        </div>
+
+        <%# The full rail on wide screens; on a phone the header shows the step. %>
+        <nav class="mt-5 hidden space-y-0.5 lg:block" aria-label="Setup steps">
+          <% Onboarding.steps.each_with_index do |s, i| %>
+            <% status = Onboarding.status(s.key) %>
+            <% classes = [ "step", ("step-done" if status == :done), ("step-skipped" if status == :skipped) ].compact.join(" ") %>
+            <% inner = capture do %>
+              <span class="step-mark"><%= status == :done ? icon(:check, css: "h-3.5 w-3.5") : i + 1 %></span>
+              <span class="min-w-0 flex-1 truncate"><%= s.rail %></span>
+              <% if status == :skipped %>
+                <span class="text-[0.75rem] text-faint">Skipped</span>
+              <% elsif s.skippable? && status != :done %>
+                <span class="text-[0.75rem] text-faint">Optional</span>
+              <% end %>
+            <% end %>
+            <% if Onboarding.reachable?(s.key) %>
+              <%= link_to inner, setup_step_path(s.key), class: classes, "aria-current": (s.key == current_key ? "step" : nil) %>
+            <% else %>
+              <div class="<%= classes %> opacity-55" aria-disabled="true"><%= inner %></div>
+            <% end %>
+          <% end %>
+        </nav>
+
+        <p class="mt-auto hidden px-2 pt-6 text-[0.8125rem] leading-relaxed text-muted lg:block">
+          Everything Radar learns stays on this computer. Your Upwork key is encrypted with a key only this install has.
+        </p>
+      </aside>
+
+      <main class="px-5 py-8 sm:px-8 lg:px-14 lg:py-12">
+        <% if @step %>
+          <p class="mb-5 text-[0.8125rem] font-medium text-muted lg:hidden">Step <%= Onboarding.number(@step.key) %> of <%= Onboarding.steps.size %></p>
+        <% end %>
+        <div class="max-w-[46rem]">
+          <%= render "layouts/flash" %>
+        </div>
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

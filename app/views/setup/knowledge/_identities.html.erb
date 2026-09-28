@@ -1,0 +1,34 @@
+<div class="max-w-[46rem]">
+  <p class="heading">Which of these are you?</p>
+  <p class="hint mt-1">
+    Found <%= scan.repos.count %> repositories in <%= scan.root_path.sub(Dir.home, "~") %>. Tick every email you have committed with:
+    personal, work, and GitHub's noreply address. Only commits from these count as your work.
+  </p>
+
+  <%= form_with url: setup_knowledge_identities_path, method: :patch, id: "identities-form", class: "mt-5" do %>
+    <ul class="panel divide-y divide-rule">
+      <%# Theirs together at the top, so checking the ticks is one glance. %>
+      <% scan.candidates.sort_by { |c| [ scan.identity_emails.include?(c["email"]) ? 0 : 1, -c["commits"].to_i ] }.each do |c| %>
+        <li>
+          <label class="flex cursor-pointer items-center gap-4 px-4 py-3 hover:bg-surface">
+            <input type="checkbox" name="emails[]" value="<%= c["email"] %>" class="check" <%= "checked" if scan.identity_emails.include?(c["email"]) %>>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold"><%= Array(c["names"]).first %></span>
+              <span class="block truncate text-[0.8125rem] text-muted"><%= c["email"] %><% if Array(c["names"]).size > 1 %>, also as <%= Array(c["names"]).drop(1).first(2).join(" and ") %><% end %></span>
+            </span>
+            <span class="text-right text-[0.8125rem] tnum text-muted">
+              <span class="block font-semibold text-ink"><%= number_label(c["commits"]) %> commits</span>
+              <%= pluralize(c["repos"], "repository", plural: "repositories") %>
+            </span>
+          </label>
+        </li>
+      <% end %>
+    </ul>
+    <p class="hint mt-3">Pre-ticked where the name matches your profile. Nobody else's commits are ever credited to you.</p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <button class="btn btn-primary" data-turbo-submits-with="Starting…">These are me, read my history</button>
+      <%= link_to "Use a different folder", "#", class: "btn btn-ghost", onclick: "document.getElementById('restart-scan').requestSubmit(); return false;" %>
+    </div>
+  <% end %>
+  <%= form_with url: setup_knowledge_restart_path, method: :delete, id: "restart-scan", html: { hidden: true } do %><% end %>
+</div>

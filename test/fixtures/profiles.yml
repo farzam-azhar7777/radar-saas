@@ -1,0 +1,13 @@
+# The install's owner in tests. Most of the suite predates the wizard and was
+# written against one real freelancer, so the fixture keeps those tests
+# meaning what they meant.
+farzam:
+  full_name: Farzam Azhar
+  preferred_name: Farzam
+  title: Full Stack Web Developer - Ruby on Rails, Next.js, AI Integration
+  country: Pakistan
+  city: Lahore
+  timezone: Asia/Karachi
+  hourly_rate: 25
+  hours_per_week: 40
+  response_time: within 6 hours

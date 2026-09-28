@@ -1,0 +1,50 @@
+<% content_for :title, "Applied - Radar" %>
+<h1 class="title">Applied</h1>
+<p class="lede mt-1">Tell Radar what happened to each one. It is the only way to learn which shapes of proposal actually win, rather than which ones read well.</p>
+
+<% if @by_archetype.present? %>
+  <section class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <% @by_archetype.sort_by { |k, _| k.to_s }.each do |shape, s| %>
+      <div class="panel px-5 py-4">
+        <p class="hint">Shape <%= shape || "unknown" %></p>
+        <p class="mt-1 font-display text-2xl font-semibold tnum"><%= s[:won] %><span class="text-[1rem] text-faint"> won of <%= s[:sent] %></span></p>
+        <p class="text-[0.8125rem] text-muted"><%= s[:replied] %> replied</p>
+      </div>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @postings.empty? %>
+  <div class="panel mt-6 px-8 py-14 text-center">
+    <div class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sunk text-muted"><%= icon(:send, css: "h-5 w-5") %></div>
+    <p class="heading mt-4">Nothing sent yet</p>
+    <p class="hint mt-1">When you send a proposal, press Mark as applied on its page and it lands here.</p>
+  </div>
+<% else %>
+  <div class="panel mt-6 divide-y divide-rule overflow-hidden">
+    <% @postings.each do |posting| %>
+      <div class="px-5 py-4">
+        <div class="flex items-start gap-4">
+          <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
+          <div class="min-w-0 flex-1">
+            <%= link_to posting.title, job_posting_path(posting), class: "block truncate font-semibold hover:underline hover:underline-offset-2" %>
+            <p class="mt-0.5 flex flex-wrap gap-x-4 text-[0.8125rem] text-muted">
+              <span><%= posting.applied_at&.strftime("%-d %b") %></span>
+              <% if posting.rate_proposed.present? %><span><%= posting.rate_proposed %></span><% end %>
+              <% if posting.total_applicants %><span><%= posting.total_applicants %> bids at the time</span><% end %>
+              <% if posting.latest_proposal&.archetype.present? %><span>shape <%= posting.latest_proposal.archetype %></span><% end %>
+            </p>
+          </div>
+          <%= link_to posting.upwork_url, target: "_blank", rel: "noopener", class: "btn btn-ghost btn-sm" do %>Upwork <%= icon(:external) %><% end %>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-1.5 sm:pl-[3.75rem]">
+          <% JobPosting::OUTCOMES.each do |key, label| %>
+            <%= button_to label, outcome_job_posting_path(posting), params: { outcome: key },
+                  class: "chip cursor-pointer #{posting.outcome == key ? 'chip-good' : 'chip-outline hover:bg-sunk'}" %>
+          <% end %>
+          <% if posting.outcome.present? %><span class="ml-1 text-[0.75rem] text-faint">recorded <%= posting.outcome_at&.strftime("%-d %b") %></span><% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

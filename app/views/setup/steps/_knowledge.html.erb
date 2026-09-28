@@ -1,0 +1,38 @@
+<% scan = @scan %>
+<div class="max-w-[60rem]">
+  <% if scan.nil? %>
+    <%= render "setup/knowledge/choose" %>
+    <div class="mt-10"><%= render "setup/knowledge/accepted", accepted: Knowledge::Project.accepted.order(:position, :name).to_a %></div>
+  <% elsif scan.busy? %>
+    <%= render "setup/knowledge/scanning", scan: scan %>
+  <% elsif scan.status == "failed" %>
+    <div class="notice notice-signal max-w-[46rem]">
+      <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+      <div>
+        <p class="font-semibold">The scan stopped</p>
+        <p class="mt-1"><%= scan.error %></p>
+        <div class="mt-3 flex gap-2">
+          <%= button_to "Try again", setup_knowledge_rescan_path, class: "btn btn-secondary btn-sm" %>
+          <%= button_to "Choose another folder", setup_knowledge_restart_path, method: :delete, class: "btn btn-ghost btn-sm" %>
+        </div>
+      </div>
+    </div>
+  <% elsif scan.status == "identities" %>
+    <%= render "setup/knowledge/identities", scan: scan %>
+  <% else %>
+    <%= render "setup/knowledge/projects", scan: scan, projects: @projects %>
+  <% end %>
+
+  <% if scan.nil? || %w[curating writing].include?(scan&.status) %>
+    <%= render "setup/knowledge/manual" %>
+  <% end %>
+</div>
+
+<% primary = if Onboarding.done?("knowledge")
+     button_to "Continue", setup_continue_path("knowledge"), class: "btn btn-primary btn-lg"
+   elsif scan.nil?
+     tag.button("Scan this folder", form: "scan-form", class: "btn btn-primary btn-lg")
+   else
+     tag.button("Continue", class: "btn btn-primary btn-lg", disabled: true, title: "Accept at least one project, or skip this step")
+   end %>
+<%= render "setup/steps/footer", step: @step, primary: primary %>

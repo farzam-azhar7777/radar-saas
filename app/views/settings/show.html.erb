@@ -1,0 +1,87 @@
+<% content_for :title, "Settings - Radar" %>
+<h1 class="title">Settings</h1>
+<p class="lede mt-1">Everything you set up, and where it lives. Change any step the same way you set it up.</p>
+
+<div class="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+  <section class="panel overflow-hidden">
+    <h2 class="heading px-5 pt-5">Setup</h2>
+    <ul class="mt-3 divide-y divide-rule border-t border-rule">
+      <% Onboarding.steps.drop(1).each do |s| %>
+        <% status = Onboarding.status(s.key) %>
+        <li class="flex items-center gap-3 px-5 py-3">
+          <span class="grid h-6 w-6 flex-none place-items-center rounded-full <%= status == :done ? 'bg-brand-soft text-brand' : 'bg-sunk text-faint' %>">
+            <%= status == :done ? icon(:check, css: "h-3.5 w-3.5") : icon(:x, css: "h-3.5 w-3.5") %>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold"><%= s.rail %></p>
+            <p class="truncate text-[0.8125rem] text-muted">
+              <% case s.key
+                 when "claude" then %>Writes with <%= Radar.writer_model || "your plan's default model" %>
+              <% when "upwork_key" then %><%= Upwork::Client.configured? ? "Key #{Credential.masked('upwork.client_id')}" : "No key saved" %>
+              <% when "upwork_connect" then %><%= @connected ? "Connected" : "Not connected" %>
+              <% when "profile" then %><%= [ @profile.full_name, @profile.title ].compact.join(", ").presence || "Not filled in" %>
+              <% when "knowledge" then %><%= pluralize(@accepted, "project") %> in your career folder<%= ", #{@drafted} waiting for you" if @drafted.positive? %>
+              <% when "voice" then %><%= @profile.samples.any? || @profile.winning_opening.present? ? "#{pluralize(@profile.samples.size, 'sample')}#{', a winning opening' if @profile.winning_opening.present?}" : "No samples" %>
+              <% when "searches" then %><%= pluralize(SavedSearch.active.count, "active search", plural: "active searches") %>
+              <% when "preferences" then %>Up to <%= Radar.daily_generation_cap %> a day, checking often from <%= Radar.active_hours.first % 24 %>:00 to <%= Radar.active_hours.last % 24 %>:00
+              <% when "first_proposal" then %><%= status == :done ? "Done" : "Not yet" %>
+              <% end %>
+            </p>
+          </div>
+          <%= link_to "Change", setup_step_path(s.key), class: "btn btn-secondary btn-sm" unless s.key == "first_proposal" %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+
+  <div class="space-y-6">
+    <section class="panel panel-pad" data-controller="theme">
+      <h2 class="heading">Appearance</h2>
+      <div class="mt-3 inline-flex gap-1 rounded-[10px] bg-sunk p-1" role="group" aria-label="Theme">
+        <% [ [ "system", "System", :sliders ], [ "light", "Light", :sun ], [ "dark", "Dark", :moon ] ].each do |value, label, ic| %>
+          <button type="button" data-theme-target="option" data-action="theme#choose" data-theme-value-param="<%= value %>"
+                  class="inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[0.8125rem] font-semibold text-muted aria-pressed:bg-paper aria-pressed:text-ink aria-pressed:shadow-sm">
+            <%= icon(ic, css: "h-3.5 w-3.5") %> <%= label %>
+          </button>
+        <% end %>
+      </div>
+      <p class="hint mt-2">Remembered on this browser.</p>
+    </section>
+
+    <section class="panel panel-pad">
+      <h2 class="heading">Checking Upwork</h2>
+      <div class="mt-3 flex items-center gap-3">
+        <div class="flex-1">
+          <p class="font-semibold"><%= Setting.auto_polling? ? "Automatic checks are on" : "Automatic checks are paused" %></p>
+          <p class="hint">Every few minutes while on. Paused, nothing new arrives unless you press Check now.</p>
+        </div>
+        <%= button_to (Setting.auto_polling? ? "Pause" : "Resume"), toggle_auto_polling_path,
+              class: "btn btn-sm #{Setting.auto_polling? ? 'btn-secondary' : 'btn-primary'}" %>
+      </div>
+    </section>
+
+    <section class="panel panel-pad">
+      <h2 class="heading">Notifications</h2>
+      <div class="mt-3 flex items-center gap-3">
+        <div class="flex-1">
+          <p class="font-semibold">Mac notifications</p>
+          <p class="hint">For when no Radar tab is open. Browser alerts work whenever one is.</p>
+        </div>
+        <%= button_to Setting.native_notifications? ? "On" : "Off", toggle_native_notifications_path, class: "btn btn-sm #{Setting.native_notifications? ? 'btn-primary' : 'btn-secondary'}" %>
+      </div>
+    </section>
+
+    <section class="panel panel-pad">
+      <h2 class="heading">Where your data lives</h2>
+      <dl class="mt-3 space-y-3 text-[0.8125rem]">
+        <div><dt class="font-semibold">Career folder</dt><dd class="mt-0.5 break-all text-muted"><code><%= Radar.career_path.to_s.sub(Dir.home, "~") %></code></dd>
+          <dd class="hint mt-0.5">The files proposals are written from. Plain text, safe to read and back up.</dd></div>
+        <% if @scan %>
+          <div><dt class="font-semibold">Projects folder</dt><dd class="mt-0.5 break-all text-muted"><code><%= @scan.root_path.sub(Dir.home, "~") %></code>, read <%= @scan.inventoried_at ? "#{time_ago_in_words(@scan.inventoried_at)} ago" : "not yet" %></dd></div>
+        <% end %>
+        <div><dt class="font-semibold">Everything else</dt><dd class="mt-0.5 break-all text-muted"><code><%= Rails.root.join("storage").to_s.sub(Dir.home, "~") %></code></dd>
+          <dd class="hint mt-0.5">Jobs, proposals, settings, and the key that encrypts your Upwork credentials. Never committed to git.</dd></div>
+      </dl>
+    </section>
+  </div>
+</div>

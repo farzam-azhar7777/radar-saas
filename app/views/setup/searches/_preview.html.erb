@@ -1,0 +1,31 @@
+<turbo-frame id="<%= frame %>">
+  <% if result.nil? %>
+    <div class="notice notice-warn">Connect Upwork first to preview what a search would find.</div>
+  <% elsif !result.ok? %>
+    <div class="notice notice-signal"><%= result.error %></div>
+  <% elsif result.seen.zero? %>
+    <div class="notice notice-warn">No open jobs match these words right now. Try shorter or more common phrases.</div>
+  <% else %>
+    <div class="well px-4 py-3.5">
+      <p class="text-[0.875rem]">
+        About <strong class="tnum"><%= result.per_day %></strong> jobs a day match these words.
+        Of the latest <%= result.seen %>, <strong class="tnum"><%= result.inbox %></strong> would reach your inbox and
+        <strong class="tnum <%= 'text-signal' if result.hot.positive? %>"><%= result.hot %></strong> would alert you.
+      </p>
+      <% if result.inbox.zero? %>
+        <p class="hint mt-1">Nothing clears <%= search.threshold %>. Lower "Inbox at", or add skills to your profile that these jobs ask for.</p>
+      <% elsif result.hot > 10 %>
+        <p class="hint mt-1">That is a lot of interruptions. Raise "Alert me at" to hear only about the best.</p>
+      <% end %>
+      <ul class="mt-3 space-y-1.5">
+        <% result.examples.each do |e| %>
+          <li class="flex items-center gap-3 text-[0.8125rem]">
+            <span class="dial <%= e[:score] >= 85 ? 'dial-strong' : (e[:score] >= 70 ? 'dial-good' : 'dial-fair') %>" style="--pct: <%= e[:score] %>; width: 1.9rem; height: 1.9rem; font-size: .7rem"><span><%= e[:score] %></span></span>
+            <span class="min-w-0 flex-1 truncate"><%= e[:title] %></span>
+            <span class="text-muted"><%= e[:budget] %></span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</turbo-frame>

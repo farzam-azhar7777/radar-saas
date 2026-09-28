@@ -1,0 +1,139 @@
+<% p = @profile %>
+<%= form_with model: p, url: setup_profile_path, method: :patch, scope: :profile, id: "profile-form", class: "max-w-[46rem] space-y-10" do |f| %>
+  <section>
+    <h2 class="heading">Who you are</h2>
+    <div class="mt-4 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= f.label :full_name, "Full name", class: "field-label" %>
+        <%= f.text_field :full_name, class: "input", autocomplete: "name", required: true, "aria-invalid": invalid?(p, :full_name) %>
+        <%= field_error(p, :full_name) %>
+      </div>
+      <div>
+        <%= f.label :preferred_name, "Name you sign with", class: "field-label" %>
+        <%= f.text_field :preferred_name, class: "input", placeholder: "Your first name" %>
+        <p class="field-hint">Proposals are signed with this. Leave empty for your first name.</p>
+      </div>
+      <div class="sm:col-span-2">
+        <%= f.label :title, "Your Upwork title", class: "field-label" %>
+        <%= f.text_field :title, class: "input", placeholder: "Full Stack Developer - Rails, React, AI integration", required: true, "aria-invalid": invalid?(p, :title) %>
+        <p class="field-hint">The line under your name on Upwork. The part before the first dash goes in your signature.</p>
+        <%= field_error(p, :title) %>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">The work you want</h2>
+    <div class="mt-4 grid gap-5 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <%= f.label :skills, "Skills you want to be hired for", class: "field-label" %>
+        <%= f.text_area :skills, rows: 2, class: "textarea", placeholder: "Ruby on Rails, React, PostgreSQL, Stripe, AWS", "aria-invalid": invalid?(p, :skills) %>
+        <p class="field-hint">Separated by commas. Radar scores every job against these, so list what you want more of, not everything you have touched.</p>
+        <%= field_error(p, :skills) %>
+      </div>
+      <div>
+        <%= f.label :hourly_rate, "Hourly rate in USD", class: "field-label" %>
+        <%= f.number_field :hourly_rate, value: (p.hourly_rate && p.hourly_rate % 1 == 0 ? p.hourly_rate.to_i : p.hourly_rate), class: "input tnum", min: 1, step: "any", placeholder: "40", "aria-invalid": invalid?(p, :hourly_rate) %>
+        <p class="field-hint">Jobs paying less score lower.</p>
+      </div>
+      <div>
+        <%= f.label :hours_per_week, "Hours a week you can take on", class: "field-label" %>
+        <%= f.number_field :hours_per_week, class: "input tnum", min: 1, max: 80, placeholder: "30" %>
+      </div>
+      <div>
+        <%= f.label :availability, "When you can start", class: "field-label" %>
+        <%= f.text_field :availability, class: "input", placeholder: "Immediately" %>
+      </div>
+      <div>
+        <%= f.label :response_time, "How fast you reply", class: "field-label" %>
+        <%= f.text_field :response_time, class: "input", placeholder: "Within a few hours" %>
+      </div>
+      <div>
+        <%= f.label :years_experience, "Years of experience", class: "field-label" %>
+        <%= f.number_field :years_experience, class: "input tnum", min: 0, max: 60 %>
+        <p class="field-hint">Used as context, never as an opening line.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">Where you work from</h2>
+    <p class="hint mt-1">Radar measures a client's working-hours overlap from here, and skips jobs restricted to other countries.</p>
+    <div class="mt-4 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= f.label :country, class: "field-label" %>
+        <%= f.select :country, countries, { include_blank: "Choose a country" }, class: "select", required: true, "aria-invalid": invalid?(p, :country) %>
+        <%= field_error(p, :country) %>
+      </div>
+      <div>
+        <%= f.label :city, class: "field-label" %>
+        <%= f.text_field :city, class: "input", autocomplete: "address-level2" %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= f.label :timezone, class: "field-label" %>
+        <%= f.select :timezone, grouped_options_for_select(timezone_options, p.timezone), { include_blank: "Choose a timezone" },
+              class: "select", required: true, data: { controller: "timezone" }, "aria-invalid": invalid?(p, :timezone) %>
+        <%= field_error(p, :timezone) %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= f.label :languages, "Languages you work in", class: "field-label" %>
+        <%= f.text_field :languages, class: "input", placeholder: "English (fluent), Spanish (native)" %>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">Links</h2>
+    <p class="hint mt-1">Only what you are happy for a client to see. A proposal never invents one you did not give.</p>
+    <div class="mt-4 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= f.label :upwork_url, "Upwork profile", class: "field-label" %>
+        <%= f.url_field :upwork_url, class: "input", placeholder: "https://www.upwork.com/freelancers/..." %>
+        <p class="field-hint">Never pasted into proposals; Upwork attaches it.</p>
+      </div>
+      <div>
+        <%= f.label :github_url, "GitHub", class: "field-label" %>
+        <%= f.url_field :github_url, class: "input", placeholder: "https://github.com/..." %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= f.label :github_note, "What to say alongside your GitHub", class: "field-label" %>
+        <%= f.text_field :github_note, class: "input", placeholder: "Most of my work is in private client repositories." %>
+      </div>
+      <div>
+        <%= f.label :linkedin_url, "LinkedIn", class: "field-label" %>
+        <%= f.url_field :linkedin_url, class: "input" %>
+      </div>
+      <div>
+        <%= f.label :website_url, "Website", class: "field-label" %>
+        <%= f.url_field :website_url, class: "input" %>
+      </div>
+      <div class="sm:col-span-2">
+        <%= f.label :portfolio_url, "Portfolio", class: "field-label" %>
+        <%= f.url_field :portfolio_url, class: "input" %>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">Your standing</h2>
+    <div class="mt-4 space-y-5">
+      <div>
+        <%= f.label :credentials_line, "Badges and credentials", class: "field-label" %>
+        <%= f.text_field :credentials_line, class: "input", placeholder: "Top Rated Plus with a 100% Job Success Score" %>
+        <p class="field-hint">Exactly as true today. Proposals quote it.</p>
+      </div>
+      <div>
+        <%= f.label :summary, "Anything else a proposal should know", class: "field-label" %>
+        <%= f.text_area :summary, rows: 3, class: "textarea", placeholder: "Long retainers with two agencies. Comfortable leading a small team. No WordPress." %>
+      </div>
+      <div>
+        <%= f.label :email, "Email", class: "field-label" %>
+        <%= f.email_field :email, class: "input", autocomplete: "email" %>
+        <p class="field-hint">Helps Radar recognise your commits. Not put in proposals.</p>
+      </div>
+    </div>
+  </section>
+<% end %>
+
+<%= render "setup/steps/footer", step: @step,
+      primary: tag.button(Onboarding.done?("profile") ? "Save and continue" : "Save profile", form: "profile-form", class: "btn btn-primary btn-lg") %>

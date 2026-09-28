@@ -1,0 +1,32 @@
+<% p = @profile %>
+<% samples = p.samples + [ "" ] * [ 3 - p.samples.size, 1 ].max %>
+<%= form_with url: setup_voice_path, method: :patch, scope: :voice, id: "voice-form", class: "max-w-[46rem] space-y-10" do |f| %>
+  <section>
+    <h2 class="heading">An opening that won you work</h2>
+    <p class="hint mt-1">The first two lines of a proposal that got a reply. Radar uses it as the model for every opening, because the client only sees the first 250 characters before deciding to click.</p>
+    <%= f.text_area :winning_opening, value: p.winning_opening, rows: 4, class: "textarea mt-3",
+          placeholder: "Ledgerline is the closest thing to your invoicing tool I have shipped: a multi-tenant Rails 8 SaaS where I wrote 610 of 640 commits and wired Stripe Connect and QuickBooks sync." %>
+    <%= f.label :winning_opening_context, "What the job was", class: "field-label mt-4" %>
+    <%= f.text_field :winning_opening_context, value: p.winning_opening_context, class: "input", placeholder: "for a CRM backend role" %>
+  </section>
+
+  <section>
+    <h2 class="heading">Things you have written</h2>
+    <p class="hint mt-1">Proposals you sent, messages to clients, your Upwork overview. Radar copies the voice, never the facts: those still come from your projects.</p>
+    <div class="mt-3 space-y-3">
+      <% samples.each_with_index do |sample, i| %>
+        <label class="sr-only" for="sample-<%= i %>">Sample <%= i + 1 %></label>
+        <textarea id="sample-<%= i %>" name="voice[samples][]" rows="5" class="textarea" placeholder="<%= i.zero? ? 'Paste a proposal or message you wrote yourself' : 'Another one, if you have it' %>"><%= sample %></textarea>
+      <% end %>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="heading">How you sign</h2>
+    <p class="hint mt-1">Upwork shows no formatting, so bold names are written in bold letters. Change it to exactly how you sign.</p>
+    <%= f.text_area :signature, value: p.signature.presence || p.default_signature, rows: 2, class: "textarea mt-3 !min-h-0 text-[1rem]" %>
+  </section>
+<% end %>
+
+<%= render "setup/steps/footer", step: @step,
+      primary: tag.button("Save", form: "voice-form", class: "btn btn-primary btn-lg") %>

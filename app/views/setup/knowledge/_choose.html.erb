@@ -1,0 +1,37 @@
+<div class="max-w-[46rem] space-y-6">
+  <%= form_with url: setup_knowledge_scan_path, id: "scan-form", class: "panel panel-pad" do %>
+    <label for="root_path" class="field-label">The folder that holds your projects</label>
+    <div class="mt-2 flex items-center gap-2">
+      <span class="text-muted"><%= icon(:folder, css: "h-5 w-5") %></span>
+      <input id="root_path" name="root_path" class="input !mt-0 font-mono text-[0.85rem]" placeholder="~/code" required autocomplete="off" spellcheck="false"
+             value="<%= likely_project_folders.first&.first %>">
+    </div>
+    <% if likely_project_folders.any? %>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-[0.8125rem] text-muted">Found on this computer:</span>
+        <% likely_project_folders.each do |f, n| %>
+          <button type="button" class="chip chip-outline cursor-pointer hover:bg-sunk" onclick="document.getElementById('root_path').value = '<%= j f %>'"><%= f %> <span class="tnum font-normal text-faint"><%= n %> repos</span></button>
+        <% end %>
+      </div>
+    <% end %>
+    <p class="field-hint mt-3">Radar looks up to three folders deep, so <code>~/code/client/app</code> is found too. Dependency folders like node_modules are skipped.</p>
+  <% end %>
+
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div>
+      <p class="font-semibold">1. Finds your commits</p>
+      <p class="hint mt-1">It reads git history only, and asks which authors are you, because most people commit under more than one email.</p>
+    </div>
+    <div>
+      <p class="font-semibold">2. You choose</p>
+      <p class="hint mt-1">Your projects, ranked by how much of each you wrote. Rename them to what clients know them as.</p>
+    </div>
+    <div>
+      <p class="font-semibold">3. It writes them up</p>
+      <p class="hint mt-1">Claude reads your own commits and the files you changed most, and writes each one up. You accept each write-up.</p>
+    </div>
+  </div>
+
+  <p class="hint flex gap-2"><%= icon(:eye_off, css: "mt-0.5 h-4 w-4 flex-none") %>
+    Nothing is uploaded except to Claude, and only for the projects you choose: their commit messages and up to eight of the files you changed most in each.</p>
+</div>

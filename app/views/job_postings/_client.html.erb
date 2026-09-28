@@ -1,0 +1,27 @@
+<%# The client, first. It used to sit below the post, so a long post pushed it
+    out of sight. The verdict is built only from the readings beside it. %>
+<% snap = ClientSnapshot.new(posting) %>
+<% verdict = snap.verdict %>
+<% edge = { good: "var(--color-good)", warn: "var(--color-warn)", bad: "var(--color-signal)", neutral: "var(--color-rule-strong)" }[verdict.tone] %>
+<% value_tone = { good: "text-good", warn: "text-warn", bad: "text-signal", neutral: "" } %>
+<section id="client" aria-labelledby="client-heading" class="panel overflow-hidden" style="border-left: 4px solid <%= edge %>">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 pt-4">
+    <h2 id="client-heading" class="heading">The client</h2>
+    <p class="text-[0.9rem] font-semibold <%= value_tone[verdict.tone] %>"><%= verdict.text %></p>
+  </div>
+  <dl class="grid grid-cols-2 gap-x-6 gap-y-4 px-5 pb-4 pt-3.5 sm:grid-cols-3 lg:grid-cols-6">
+    <% snap.readings.each do |r| %>
+      <div class="min-w-0">
+        <dt class="text-[0.75rem] font-semibold text-muted"><%= r.label %></dt>
+        <dd class="mt-0.5 break-words font-display text-[1.05rem] font-semibold leading-tight tnum <%= value_tone[r.tone] %>"><%= r.value %></dd>
+        <% if r.detail.present? %><dd class="truncate text-[0.75rem] text-muted" title="<%= r.detail %>"><%= r.detail %></dd><% end %>
+      </div>
+    <% end %>
+  </dl>
+  <% if snap.last_hired_for || snap.timezone %>
+    <p class="flex flex-wrap gap-x-5 gap-y-1 border-t border-rule px-5 py-2.5 text-[0.8125rem] text-muted">
+      <% if snap.last_hired_for %><span>Last hired for: <span class="text-ink"><%= snap.last_hired_for %></span></span><% end %>
+      <% if snap.timezone %><span title="The client's own account setting, not always right">Their timezone on Upwork: <%= snap.timezone %></span><% end %>
+    </p>
+  <% end %>
+</section>

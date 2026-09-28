@@ -1,0 +1,54 @@
+<%# One named part of the proposal, with its own copy and its own rewrite. The
+    name comes from whoever wrote it, so it fits this job. %>
+<article id="<%= dom_id(part) %>" data-controller="clipboard parts" class="group border-t border-rule first:border-t-0">
+  <div class="flex items-center gap-2.5 px-6 pt-4">
+    <h3 class="text-[0.8125rem] font-semibold text-muted"><%= part.display_label %></h3>
+    <span class="text-[0.75rem] tnum text-faint"><%= part.word_count %> words</span>
+    <% if part.rewriting? %>
+      <span class="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold text-brand"><span class="ping"></span> Rewriting</span>
+    <% end %>
+    <div class="ml-auto flex items-center gap-1 opacity-80 transition group-hover:opacity-100">
+      <% unless part.rewriting? %>
+        <button data-action="clipboard#copy" data-clipboard-target="button" class="btn btn-ghost btn-sm"><%= icon(:copy) %> <span>Copy</span></button>
+        <% unless locked %>
+          <button type="button" data-action="parts#toggle" data-parts-target="opener" class="btn btn-ghost btn-sm">Rewrite</button>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <pre data-clipboard-target="source" class="whitespace-pre-wrap px-6 pb-5 pt-2 font-sans text-[0.925rem] leading-relaxed <%= "opacity-50" if part.rewriting? %>"><%= part.body %></pre>
+
+  <% if part.rewriting? %>
+    <%# Same clock and fallback poll as a full generation, paced for a part. %>
+    <div class="border-t border-rule bg-surface px-6 py-3"
+         data-controller="generation"
+         data-generation-started-at-value="<%= (part.rewrite_queued_at.to_f * 1000).round %>"
+         data-generation-typical-value="<%= Radar.typical_section_seconds %>"
+         data-generation-timeout-value="<%= SectionRewriter::TIMEOUT %>"
+         data-generation-url-value="<%= job_posting_path(posting) %>">
+      <div class="flex items-center gap-2.5">
+        <p class="text-[0.8125rem] text-muted">Rewriting just this part. The rest stays as it is.</p>
+        <span class="ml-auto text-[0.8125rem] tnum text-muted" data-generation-target="elapsed"><%= part.rewriting_for %>s</span>
+      </div>
+      <div class="meter mt-2"><i style="width: 4%; background: var(--color-brand)" data-generation-target="bar"></i></div>
+      <% if part.rewrite_feedback.present? %>
+        <p class="mt-2 text-[0.8125rem] italic text-faint">"<%= part.rewrite_feedback %>"</p>
+      <% end %>
+    </div>
+  <% elsif !locked %>
+    <div data-parts-target="panel" hidden class="border-t border-rule bg-surface px-6 py-4">
+      <%= form_with url: rewrite_proposal_section_path(part), method: :post, class: "space-y-2.5" do |f| %>
+        <%= f.text_area :feedback, rows: 2, placeholder: rewrite_placeholder(part), data: { parts_target: "input" },
+              class: "textarea !mt-0 !min-h-0", "aria-label": "What to change about #{part.display_label}" %>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= tag.button "Rewrite this part", type: "submit", name: "scope", value: "once", data: { turbo_submits_with: "Starting…" },
+                title: "Rewrites only #{part.display_label}. Every other part is kept as it is.", class: "btn btn-primary btn-sm" %>
+          <%= tag.button "Rewrite and remember", type: "submit", name: "scope", value: "remember", data: { turbo_submits_with: "Starting…" },
+                title: "Also turns your note into a rule for future proposals.", class: "btn btn-secondary btn-sm" %>
+          <button type="button" data-action="parts#toggle" class="btn btn-ghost btn-sm ml-auto">Cancel</button>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</article>

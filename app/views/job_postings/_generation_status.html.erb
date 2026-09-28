@@ -1,0 +1,17 @@
+<%# The live state of a running generation. Without it a rewrite looked
+    identical to a finished proposal and there was nothing to wait on. %>
+<div class="border-b border-rule bg-surface px-6 py-5"
+     data-controller="generation"
+     data-generation-started-at-value="<%= (posting.generation_queued_at.to_f * 1000).round %>"
+     data-generation-typical-value="<%= Radar.typical_generation_seconds %>"
+     data-generation-timeout-value="<%= Radar.generation_timeout %>"
+     data-generation-url-value="<%= job_posting_path(posting) %>">
+  <div class="flex items-center gap-3">
+    <span class="ping"></span>
+    <p class="font-semibold"><%= proposal ? "Rewriting version #{proposal.version}" : "Writing your proposal" %></p>
+    <span class="ml-auto text-[0.8125rem] tnum text-muted" data-generation-target="elapsed"><%= "#{posting.generating_for.to_i}s" %></span>
+  </div>
+  <div class="meter mt-3"><i style="width: 2%; background: var(--color-brand)" data-generation-target="bar"></i></div>
+  <p class="hint mt-2.5" data-generation-target="note">Reading the post, your projects and the writing rules.</p>
+  <p class="mt-1 text-[0.75rem] text-faint">Usually about <%= Radar.typical_generation_seconds / 60 %> minutes. This updates itself, and keeps checking even if the live connection drops.</p>
+</div>

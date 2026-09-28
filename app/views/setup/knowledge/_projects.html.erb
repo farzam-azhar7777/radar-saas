@@ -1,0 +1,106 @@
+<% all = projects.to_a %>
+<% drafted = all.select { |p| p.status == "drafted" } %>
+<% flying = all.select { |p| %w[queued writing].include?(p.status) } %>
+<% failed = all.select { |p| p.status == "failed" || p.stale? } %>
+<% flying -= failed %>
+<% accepted = Knowledge::Project.accepted.order(:position, :name).to_a %>
+<% candidates = all.select { |p| p.status == "candidate" } %>
+<% excluded = all.select { |p| p.status == "excluded" } %>
+<% ticked = candidates.select(&:included) %>
+<% others = scan.others_repos.count %>
+
+<div class="space-y-10" <%= 'data-controller=autorefresh data-autorefresh-every-value=4000' if flying.any? %>>
+  <div class="flex flex-wrap items-end gap-4">
+    <div class="min-w-0 flex-1">
+      <p class="heading"><%= pluralize(all.size - excluded.size, "project") %> with your commits in <%= scan.root_path.sub(Dir.home, "~") %></p>
+      <p class="hint mt-1">
+        From <%= pluralize(scan.own_repos.count, "repository", plural: "repositories") %> you committed to.
+        <%= pluralize(others, "other repository", plural: "other repositories") %> had none of your commits and <%= others == 1 ? "was" : "were" %> set aside.
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <%= button_to setup_knowledge_rescan_path, class: "btn btn-ghost btn-sm", title: "Read every repository again. Your choices are kept." do %><%= icon(:refresh) %> Rescan<% end %>
+      <%= button_to "Different folder", setup_knowledge_restart_path, method: :delete, class: "btn btn-ghost btn-sm",
+            form: { data: { turbo_confirm: "Forget this folder and every choice made about it? Accepted projects stay in your career folder." } } %>
+    </div>
+  </div>
+
+  <% if drafted.any? %>
+    <section>
+      <div class="flex flex-wrap items-center gap-3">
+        <h2 class="heading">Ready for you to check</h2>
+        <span class="chip chip-good tnum"><%= drafted.size %></span>
+        <%= button_to "Accept all #{drafted.size}", setup_knowledge_accept_all_path, class: "btn btn-secondary btn-sm",
+              form: { class: "ml-auto", data: { turbo_confirm: "Accept all #{drafted.size} write-ups as they are? You can still edit or take any out later." } } %>
+      </div>
+      <p class="hint mt-1">Proposals quote these word for word. Accept what is true; fix or leave out what is not.</p>
+      <div class="mt-4 space-y-4">
+        <% drafted.each do |project| %>
+          <%= render "setup/knowledge/draft", project: project %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if flying.any? || failed.any? %>
+    <section>
+      <h2 class="heading">Being written up</h2>
+      <p class="hint mt-1">Three at a time, usually a minute or two each; the largest repositories take up to about eight. This page updates as each one lands.</p>
+      <ul class="panel mt-4 divide-y divide-rule">
+        <% flying.each do |project| %>
+          <li class="flex items-center gap-3 px-4 py-3">
+            <span class="ping"></span>
+            <span class="flex-1 font-semibold"><%= project.name %></span>
+            <span class="text-[0.8125rem] tnum text-muted"><%= project.progress_label %></span>
+          </li>
+        <% end %>
+        <% failed.each do |project| %>
+          <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+            <span class="ping ping-signal ping-off" style="background: var(--color-signal)"></span>
+            <span class="flex-1 font-semibold"><%= project.name %></span>
+            <span class="w-full text-[0.8125rem] text-signal sm:w-auto sm:max-w-[60%] sm:truncate" title="<%= project.error %>"><%= project.stale? ? "Stopped responding." : project.error.to_s.truncate(120) %></span>
+            <%= button_to "Try again", setup_knowledge_rewrite_path(project), class: "btn btn-secondary btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <%= render "setup/knowledge/accepted", accepted: accepted %>
+
+  <% if candidates.any? %>
+    <section>
+      <div class="flex flex-wrap items-center gap-3">
+        <h2 class="heading"><%= accepted.any? || drafted.any? || flying.any? ? "Other projects found" : "Choose what to write up" %></h2>
+        <span class="chip tnum"><%= ticked.size %> of <%= candidates.size %> chosen</span>
+        <% if ticked.any? %>
+          <%= button_to "Write up #{pluralize(ticked.size, 'project')}", setup_knowledge_write_path,
+                class: "btn btn-primary btn-sm", form: { class: "ml-auto" }, data: { turbo_submits_with: "Starting…" } %>
+        <% end %>
+      </div>
+      <p class="hint mt-1">
+        Ranked by how much of each you wrote, how recently and for how long. The top ones are chosen for you.
+        Rename a project to what a client would call it: the name is quoted as written.
+      </p>
+      <ul class="panel mt-4 divide-y divide-rule">
+        <% candidates.each do |project| %>
+          <%= render "setup/knowledge/candidate", project: project, candidates: candidates %>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if excluded.any? %>
+    <details>
+      <summary class="cursor-pointer text-[0.875rem] font-semibold text-muted hover:text-ink">Left out (<%= excluded.size %>)</summary>
+      <ul class="panel mt-3 divide-y divide-rule">
+        <% excluded.each do |project| %>
+          <li class="flex items-center gap-3 px-4 py-2.5">
+            <span class="flex-1 text-muted"><%= project.name %></span>
+            <%= button_to "Bring back", setup_knowledge_restore_path(project), class: "btn btn-ghost btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</div>
