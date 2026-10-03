@@ -1,5 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Long enough for the scheduler to tick after a wake, or for the watchdog to
+// replace a hung one (it checks every minute, then allows 90 seconds).
+const STALL_GRACE_MS = 5 * 60 * 1000
+
 // Second alert path. The macOS CLI notifier can be silently blocked with no
 // prompt; Chrome asks properly and is already a registered notification app.
 // Also drives the tab title, which works with no permission at all.
@@ -187,14 +191,22 @@ export default class extends Controller {
 
   // Polling dying is the one failure with no symptom: the inbox simply stops
   // filling, which looks exactly like a quiet morning on Upwork.
+  //
+  // Waking from sleep always looks stalled for a minute or two, until the
+  // scheduler ticks or the watchdog revives it, so only a stall that outlasts
+  // the grace is announced. And once per stall: remembered across page loads
+  // and tabs, which used to re-announce it on every navigation.
   maybeStalled(data) {
     if (!data.polling_stalled) {
-      this.stalledAnnounced = false
+      this.stalledSince = null
+      localStorage.removeItem("radar.stallAnnounced")
       return
     }
-    if (this.stalledAnnounced) return
+    this.stalledSince ??= Date.now()
+    if (Date.now() - this.stalledSince < STALL_GRACE_MS) return
+    if (localStorage.getItem("radar.stallAnnounced")) return
 
-    this.stalledAnnounced = true
+    localStorage.setItem("radar.stallAnnounced", String(Date.now()))
     if (Notification.permission !== "granted") return
 
     const n = new Notification("Radar has stopped finding jobs", {
