@@ -26,8 +26,11 @@ module Knowledge
     end
 
     def call
-      repos = @project.repos.to_a
-      raise Error, "this project has no repositories to read" if repos.empty?
+      all = @project.repos.to_a
+      raise Error, "this project has no repositories to read" if all.empty?
+
+      repos = all.select { |r| File.directory?(r.path) }
+      raise Error, "its folder no longer exists (#{all.first.path}). Rescan to refresh the list." if repos.empty?
 
       result = ClaudeRun.call(prompt, timeout: TIMEOUT, model: Radar.writer_model, label: "project write-up",
                               chdir: repos.first.path, add_dirs: repos.drop(1).map(&:path))

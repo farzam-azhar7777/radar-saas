@@ -64,6 +64,22 @@ class KnowledgeEngineTest < ActiveSupport::TestCase
     assert_equal %w[acme-api acme-web clients/other-lib], paths
   end
 
+  test "a git worktree is the repository it was made from, not another one" do
+    git(@root.join("acme-api"), "worktree", "add", "-q", "-b", "feature", @root.join("acme-api-feature").to_s)
+
+    paths = Knowledge::Discover.call(@root).map { |p| Pathname(p).relative_path_from(@root).to_s }
+    assert_equal %w[acme-api acme-web clients/other-lib], paths
+  end
+
+  test "a write-up whose folder is gone says so" do
+    inventory!
+    project = @scan.projects.find_by!(stem: Knowledge::Clusterer.stem("acme-api"))
+    project.repos.each { |repo| repo.update!(path: @root.join("deleted", repo.name).to_s) }
+
+    error = assert_raises(Knowledge::Synthesizer::Error) { Knowledge::Synthesizer.call(project) }
+    assert_match "no longer exists", error.message
+  end
+
   test "an empty folder fails with a message that says what to do" do
     @scan.update!(root_path: Dir.mktmpdir)
     discover!

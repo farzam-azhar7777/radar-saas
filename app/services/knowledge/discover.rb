@@ -26,7 +26,7 @@ module Knowledge
     end
 
     def walk(dir, depth, found)
-      found << dir.to_s if depth.positive? && Git.repo?(dir)
+      found << dir.to_s if depth.positive? && Git.repo?(dir) && !Git.worktree?(dir)
       return if depth >= MAX_DEPTH
 
       children(dir).each { |child| walk(child, depth + 1, found) }

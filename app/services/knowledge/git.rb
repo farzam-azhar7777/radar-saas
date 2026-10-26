@@ -39,5 +39,12 @@ module Knowledge
     end
 
     def repo?(path) = File.exist?(File.join(path.to_s, ".git"))
+
+    def worktree?(path)
+      dot_git = File.join(path.to_s, ".git")
+      File.file?(dot_git) && File.read(dot_git).match?(%r{/worktrees/})
+    rescue SystemCallError
+      false
+    end
   end
 end
