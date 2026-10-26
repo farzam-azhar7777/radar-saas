@@ -23,7 +23,10 @@ Rails.application.routes.draw do
     member { post :rewrite }
   end
 
-  resources :saved_searches, path: "searches"
+  resources :saved_searches, path: "searches" do
+    member { post :toggle }
+    collection { post :bulk }
+  end
   resources :lessons, only: %i[index update destroy] do
     collection { post :teach }
   end

@@ -1,0 +1,7 @@
+<%= button_to toggle_saved_search_path(search, field: field), class: "flex w-full items-center gap-2.5 text-left",
+      role: "switch", "aria-checked": on.to_s, title: hint do %>
+  <span class="relative h-5 w-9 flex-none rounded-full transition <%= on ? 'bg-brand' : 'bg-rule-strong' %>">
+    <span class="absolute top-0.5 h-4 w-4 rounded-full bg-paper shadow transition-all <%= on ? 'left-[1.1rem]' : 'left-0.5' %>"></span>
+  </span>
+  <span class="text-[0.8125rem] font-semibold"><%= label %></span>
+<% end %>

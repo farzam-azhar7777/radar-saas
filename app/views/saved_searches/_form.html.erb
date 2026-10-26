@@ -1,6 +1,7 @@
-<%= form_with model: @search, class: "panel panel-pad max-w-[46rem] space-y-5" do |f| %>
-  <% if @search.errors.any? %>
-    <div class="notice notice-signal"><%= @search.errors.full_messages.to_sentence %></div>
+<% search = local_assigns.fetch(:search, @search) %>
+<%= form_with model: search, namespace: local_assigns[:namespace], class: "panel panel-pad max-w-[46rem] space-y-5" do |f| %>
+  <% if search.errors.any? %>
+    <div class="notice notice-signal"><%= search.errors.full_messages.to_sentence %></div>
   <% end %>
   <div>
     <%= f.label :name, class: "field-label" %>
@@ -8,12 +9,12 @@
   </div>
   <div>
     <%= f.label :terms_text, "Words a client would use", class: "field-label" %>
-    <%= f.text_area :terms_text, value: @search.terms_list.join(", "), rows: 2, class: "textarea !min-h-0" %>
+    <%= f.text_area :terms_text, value: search.terms_list.join(", "), rows: 2, class: "textarea !min-h-0" %>
     <p class="field-hint">Separated by commas. Phrases are matched as phrases.</p>
   </div>
   <div>
     <%= f.label :excluded_keywords_text, "Words that rule a job out", class: "field-label" %>
-    <%= f.text_area :excluded_keywords_text, value: @search.excluded_keywords_list.join(", "), rows: 2, class: "textarea !min-h-0" %>
+    <%= f.text_area :excluded_keywords_text, value: search.excluded_keywords_list.join(", "), rows: 2, class: "textarea !min-h-0" %>
   </div>
   <div class="grid gap-5 sm:grid-cols-3">
     <div>
@@ -46,8 +47,8 @@
   <div class="flex flex-wrap items-center gap-3 pt-1">
     <%= f.submit "Save search", class: "btn btn-primary" %>
     <%= link_to "Cancel", saved_searches_path, class: "btn btn-ghost" %>
-    <% if @search.persisted? %>
-      <%= button_to "Delete", saved_search_path(@search), method: :delete, form: { class: "ml-auto", data: { turbo_confirm: "Delete this search? Jobs it found stay." } }, class: "btn btn-danger btn-sm" %>
+    <% if search.persisted? %>
+      <%= button_to "Delete", saved_search_path(search), method: :delete, form: { class: "ml-auto", data: { turbo_confirm: "Delete this search? Jobs it found stay." } }, class: "btn btn-danger btn-sm" %>
     <% end %>
   </div>
 <% end %>
