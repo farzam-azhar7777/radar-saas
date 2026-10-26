@@ -1,0 +1,21 @@
+services:
+  radar:
+    build: .
+    image: radar
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-8586}:8586"
+    environment:
+      SOLID_QUEUE_IN_PUMA: "1"
+      CLAUDE_CONFIG_DIR: /home/radar/.claude
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      RADAR_TIMEZONE: ${RADAR_TIMEZONE:-UTC}
+      TZ: ${RADAR_TIMEZONE:-UTC}
+    volumes:
+      - ./storage:/rails/storage
+      - claude-home:/home/radar/.claude
+      - ${RADAR_PROJECTS_DIR:-./tmp/storage}:${RADAR_PROJECTS_DIR:-/projects}:ro
+
+volumes:
+  claude-home:
