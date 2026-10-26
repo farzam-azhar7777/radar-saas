@@ -60,6 +60,8 @@ class ClaudeRun
   private
 
   def spawn_and_wait
+    raise Error, "the folder #{@chdir} does not exist" unless Dir.exist?(@chdir)
+
     cmd = [ Radar.claude_bin, "-p", @prompt, "--output-format", "json", "--allowedTools", ALLOWED_TOOLS ]
     cmd += [ "--model", @model ] if @model
     @add_dirs.each { |dir| cmd += [ "--add-dir", dir ] }
@@ -87,13 +89,19 @@ class ClaudeRun
       status = wait_thr.value
     end
 
-    raise Error, "claude exited #{status&.exitstatus}: #{output.first(400)}" unless status&.success?
+    raise Error, "claude exited #{status&.exitstatus}: #{failure_reason(output)}" unless status&.success?
 
     output
   rescue Errno::ENOENT
     # Not on the PATH the server was started with. Common when claude came
     # from a version manager, and fixable in Settings without a restart.
     raise Error, "Radar could not find the claude command (#{Radar.claude_bin}). Set its full path in Settings."
+  end
+
+  def failure_reason(output)
+    parse(output)["result"].presence || output.first(400)
+  rescue Error
+    output.first(400)
   end
 
   def parse(raw)
