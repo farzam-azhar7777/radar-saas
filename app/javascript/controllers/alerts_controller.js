@@ -24,6 +24,17 @@ export default class extends Controller {
     this.render()
     this.poll()
     this.timer = setInterval(() => this.poll(), this.intervalValue)
+    this.worker = this.registerWorker()
+  }
+
+  async registerWorker() {
+    if (!("serviceWorker" in navigator)) return null
+    try {
+      await navigator.serviceWorker.register("/service-worker.js")
+      return await navigator.serviceWorker.ready
+    } catch {
+      return null
+    }
   }
 
   disconnect() {
@@ -239,14 +250,27 @@ export default class extends Controller {
     n.onclick = () => { window.focus(); window.location = "/" }
   }
 
-  announce(job) {
+  async announce(job) {
     if (Notification.permission !== "granted") return
 
-    const n = new Notification(`Strong match · ${job.score}`, {
-      body: `${job.title}\n${job.budget} · ${job.search}`,
-      tag: `radar-${job.id}`,
-      requireInteraction: true
-    })
+    const title = `Strong match · ${job.score}`
+    const body = `${job.title}\n${[job.posted, job.budget, job.search].filter(Boolean).join(" · ")}`
+    const tag = `radar-${job.id}`
+
+    const worker = await this.worker
+    if (worker) {
+      const started = job.writing || job.ready
+      return worker.showNotification(title, {
+        body, tag, requireInteraction: true,
+        data: { id: job.id, title: job.title, url: job.url, writeUrl: job.write_url, dismissUrl: job.dismiss_url },
+        actions: [
+          started ? { action: "open", title: job.ready ? "Open proposal" : "Open job" } : { action: "write", title: "Write proposal" },
+          { action: "dismiss", title: "Not interested" }
+        ]
+      })
+    }
+
+    const n = new Notification(title, { body, tag, requireInteraction: true })
     n.onclick = () => {
       window.focus()
       window.location = job.url

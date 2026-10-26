@@ -123,6 +123,7 @@ module Radar
   # --- digest ----------------------------------------------------------
   def self.digest_size        = Integer(ENV.fetch("RADAR_DIGEST_SIZE", 8))
   def self.digest_after_hours = Float(ENV.fetch("RADAR_DIGEST_AFTER_HOURS", 3))
+  def self.alert_max_age_hours = Float(ENV.fetch("RADAR_ALERT_MAX_AGE_HOURS", 24))
 
   # Seconds until the next poll, jittered, and longer while they are asleep.
   def self.next_interval(now = Time.current)

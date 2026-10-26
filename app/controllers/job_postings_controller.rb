@@ -132,11 +132,7 @@ class JobPostingsController < ApplicationController
     remember ? "Rewriting, and remembering that for future proposals." : "Rewriting this one. The note is not kept."
   end
 
-  def queue_generation(feedback: nil)
-    @posting.update_column(:generation_queued_at, Time.current)
-    GenerateProposalJob.perform_later(@posting, feedback: feedback, force: true)
-    BroadcastPosting.call(@posting)
-  end
+  def queue_generation(feedback: nil) = @posting.queue_generation!(feedback: feedback)
 
   def set_posting
     @posting = JobPosting.find(params[:id])

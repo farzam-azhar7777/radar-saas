@@ -37,7 +37,7 @@ class PollAllSearchesJob < ApplicationJob
     # re-homed to Rails and treated as Tier A.
     matched = IngestPostings.call(rows, searches: all_searches)
     FetchClientStats.call(matched)
-    hot, quiet = matched.partition(&:hot?)
+    hot = matched.select { |p| p.hot? && p.fresh? }
 
     generate(hot)
     notify_hot(hot)
