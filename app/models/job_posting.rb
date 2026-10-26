@@ -208,13 +208,13 @@ class JobPosting < ApplicationRecord
     [ client_city.presence, client_country_name ].compact.join(", ").presence
   end
 
-  # Upwork shows this as "100% hire rate". It is hires over jobs posted, and it
+  # Upwork shows this as "65% hire rate". It is jobs that ended in a hire over jobs posted, rounded up, and it
   # separates a client who hires from one who collects proposals and vanishes.
   def client_hire_rate
     posted = client_total_posted_jobs.to_i
-    return nil unless posted.positive?
+    return nil unless posted.positive? && client_jobs_with_hires
 
-    ((client_total_hires.to_f / posted) * 100).round
+    (client_jobs_with_hires * 100.0 / posted).ceil
   end
 
   def client_avg_per_hire

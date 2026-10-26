@@ -18,21 +18,21 @@ class ClientSnapshotTest < ActiveSupport::TestCase
   end
 
   test "an established client who hires reads as good" do
-    v = snap(client_payment_verified: true, client_total_spent: 48_000, client_total_hires: 12, client_total_posted_jobs: 15,
+    v = snap(client_payment_verified: true, client_total_spent: 48_000, client_total_hires: 12, client_total_posted_jobs: 15, client_jobs_with_hires: 12,
              client_rating: 4.9, client_total_reviews: 10).verdict
     assert_equal :good, v.tone
     assert_equal "Established client who hires.", v.text
   end
 
   test "a client who posts a lot and hires little is flagged with the numbers" do
-    v = snap(client_payment_verified: true, client_total_spent: 3_000, client_total_hires: 2, client_total_posted_jobs: 20).verdict
+    v = snap(client_payment_verified: true, client_total_spent: 3_000, client_total_hires: 2, client_total_posted_jobs: 20, client_jobs_with_hires: 2).verdict
     assert_equal :warn, v.tone
     assert_match "Posts often, hires rarely: 10% of 20 jobs", v.text
   end
 
   test "the job that prompted this: verified and hires, but tiny spend and no shared hours" do
     Profile.current.update!(timezone: "Asia/Karachi")
-    v = snap(client_payment_verified: true, client_total_spent: 200, client_total_hires: 2, client_total_posted_jobs: 2,
+    v = snap(client_payment_verified: true, client_total_spent: 200, client_total_hires: 2, client_total_posted_jobs: 2, client_jobs_with_hires: 2,
              client_rating: 5.0, client_total_reviews: 1, client_timezone: "America/New_York").verdict
     assert_equal :warn, v.tone
     assert_equal "Hires when they post, but small budgets so far: $200 across 2 hires and no working hours in common with you.", v.text
@@ -43,8 +43,21 @@ class ClientSnapshotTest < ActiveSupport::TestCase
     assert_equal "Hidden", spent.value
   end
 
+  test "a hire rate not yet fetched is left out rather than read as zero" do
+    s = snap(client_payment_verified: true, client_total_spent: 3_000, client_total_hires: 2, client_total_posted_jobs: 20)
+    assert_no_match "hires rarely", s.verdict.text
+    assert_not_includes s.readings.map(&:label), "Hire rate"
+  end
+
+  test "the hire rate reads like Upwork's, open jobs included" do
+    rate = snap(client_payment_verified: true, client_total_hires: 18, client_total_posted_jobs: 14,
+                client_jobs_with_hires: 9, client_open_jobs: 1).readings.find { |r| r.label == "Hire rate" }
+    assert_equal "65%", rate.value
+    assert_equal "of 14 jobs posted, 1 open", rate.detail
+  end
+
   test "readings carry what matters, each with its reason" do
-    labels = snap(client_payment_verified: true, client_total_spent: 5_000, client_total_hires: 5, client_total_posted_jobs: 8,
+    labels = snap(client_payment_verified: true, client_total_spent: 5_000, client_total_hires: 5, client_total_posted_jobs: 8, client_jobs_with_hires: 5,
                   client_rating: 4.6, client_total_reviews: 4, client_country: "USA", client_city: "Austin",
                   client_timezone: "America/Chicago").readings.map(&:label)
     assert_equal [ "Payment", "Spent", "Hire rate", "Rating", "Location", "Hours shared" ], labels

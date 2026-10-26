@@ -66,10 +66,10 @@ class ClientSnapshot
                   tone: spent >= 10_000 ? :good : (spent.zero? ? :warn : :neutral))
     end
 
-    if posted.positive?
-      list << Reading.new(label: "Hire rate", value: hire_rate ? "#{hire_rate}%" : "None",
-                          detail: "of #{pluralize(posted, 'job')} posted",
-                          tone: hire_rate.to_i >= 50 ? :good : :warn)
+    if hire_rate
+      list << Reading.new(label: "Hire rate", value: "#{hire_rate}%",
+                          detail: [ "of #{pluralize(posted, 'job')} posted", (open_jobs.positive? && "#{open_jobs} open") ].compact.join(", "),
+                          tone: hire_rate >= 50 ? :good : :warn)
     end
 
     if rating.positive?
@@ -103,12 +103,13 @@ class ClientSnapshot
   def reviews = @p.client_total_reviews.to_i
   def rating = @p.client_rating.to_f
   def hire_rate = @p.client_hire_rate
+  def open_jobs = @p.client_open_jobs.to_i
   def avg_per_hire = @p.client_avg_per_hire
   def overlap = @p.client_overlap_hours
 
   def no_history? = posted.zero? && spent.zero? && hires.zero?
   def established? = !privacy? && spent >= 10_000 && hire_rate.to_i >= 50 && (rating.zero? || rating >= 4.5)
-  def hires_rarely? = posted >= 5 && hire_rate.to_i < 30
+  def hires_rarely? = hire_rate.present? && posted >= 5 && hire_rate < 30
 
   def payment_label
     return "Verified" if @p.client_payment_verified == true
