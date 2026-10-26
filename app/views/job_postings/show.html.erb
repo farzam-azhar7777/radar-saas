@@ -15,6 +15,9 @@
       <% if @posting.duration_label.present? %><span><%= @posting.duration_label %></span><% end %>
       <% if @posting.saved_search %><span><%= @posting.saved_search.name %></span><% end %>
       <span>posted <%= @posting.age_label %></span>
+      <% if (count = @posting.screening_questions_list.size).positive? %>
+        <a href="#questions" class="font-semibold text-brand hover:underline"><%= pluralize(count, "screening question") %></a>
+      <% end %>
     </p>
   </div>
   <div class="flex flex-wrap items-center gap-2">
@@ -37,6 +40,24 @@
 
 <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
   <div class="space-y-5">
+    <% if (questions = @posting.screening_questions_list).any? %>
+      <% answered = @posting.latest_proposal&.body.present? %>
+      <section id="questions" class="panel panel-pad scroll-mt-6 border-l-4 !border-l-brand">
+        <h2 class="heading">Screening questions</h2>
+        <p class="hint"><%= pluralize(questions.size, "question") %> the client asks, each with its own box on Upwork.</p>
+        <ol class="mt-3 space-y-2.5">
+          <% questions.each_with_index do |q, i| %>
+            <li class="flex gap-3 text-[0.875rem] leading-relaxed">
+              <span class="step-mark !h-6 !w-6 !text-[0.7rem]"><%= i + 1 %></span>
+              <span class="min-w-0 flex-1"><%= q %>
+                <% if answered %><a href="#answer-<%= i + 1 %>" class="ml-1 whitespace-nowrap font-semibold text-brand hover:underline">See answer</a><% end %>
+              </span>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    <% end %>
+
     <section class="panel panel-pad">
       <h2 class="heading">The post</h2>
       <div class="mt-3 whitespace-pre-wrap text-[0.9rem] leading-relaxed" style="max-width: 70ch"><%= @posting.description %></div>
@@ -44,18 +65,6 @@
         <div class="mt-4 flex flex-wrap gap-1.5"><% Array(@posting.skills).each do |s| %><span class="chip"><%= s %></span><% end %></div>
       <% end %>
     </section>
-
-    <% if @posting.screening_questions_list.any? %>
-      <section class="panel panel-pad">
-        <h2 class="heading">Screening questions</h2>
-        <p class="hint">Answered in the proposal, each in its own box on Upwork.</p>
-        <ol class="mt-3 space-y-2.5">
-          <% @posting.screening_questions_list.each_with_index do |q, i| %>
-            <li class="flex gap-3 text-[0.875rem] leading-relaxed"><span class="step-mark !h-6 !w-6 !text-[0.7rem]"><%= i + 1 %></span><span><%= q %></span></li>
-          <% end %>
-        </ol>
-      </section>
-    <% end %>
 
     <section class="panel panel-pad">
       <h2 class="heading">Why it scored <%= @posting.score %></h2>
