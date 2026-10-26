@@ -12,7 +12,7 @@ module ProposalAssembler
 
   module_function
 
-  def call(sections)
+  def call(sections, examples_before_signoff: ProposalSpec.personal_layout?)
     parts = Array(sections).reject { |s| body_of(s).blank? }
     answers   = parts.select { |s| role_of(s) == "answer" }
     portfolio = parts.select { |s| role_of(s) == "portfolio" }
@@ -23,13 +23,19 @@ module ProposalAssembler
     # renumber the block behind his back.
     out << answers.map.with_index(1) { |s, i| "#{i}. #{body_of(s)}" }.join("\n\n") if answers.any?
     out << ANSWER_RULE if answers.any? && letter.any?
-    out << letter.map { |s| body_of(s) }.join("\n\n") if letter.any?
+    if examples_before_signoff && portfolio.any? && letter.size > 1
+      out << letter[0..-2].map { |s| body_of(s) }.join("\n\n")
+      out += portfolio.map { |s| body_of(s) }
+      out << body_of(letter.last)
+    else
+      out << letter.map { |s| body_of(s) }.join("\n\n") if letter.any?
 
-    # A rule before each trailing block, not one before all of them. Two
-    # portfolio blocks joined by a blank line read as one long block.
-    portfolio.each do |s|
-      out << PORTFOLIO_RULE
-      out << body_of(s)
+      # A rule before each trailing block, not one before all of them. Two
+      # portfolio blocks joined by a blank line read as one long block.
+      portfolio.each do |s|
+        out << PORTFOLIO_RULE
+        out << body_of(s)
+      end
     end
 
     out.reject(&:blank?).join("\n\n")

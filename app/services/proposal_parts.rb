@@ -11,6 +11,7 @@ class ProposalParts
   # phrase; matching anywhere threw the letter away.
   EXAMPLES = /\A(?:Examples of My Work|Related Projects|RELATED PROJECTS|\u{1D5D8}\u{1D605}|\u{1D5E5}\u{1D5E4})/i
   ANSWER_BLOCK = /\A\s*\d+[.)]\s/
+  EXAMPLES_HEADING_LINE = /^(?:Examples of My Work|Related Projects|𝗘𝘅𝗮𝗺𝗽𝗹𝗲𝘀 𝗼𝗳 𝗠𝘆 𝗪𝗼𝗿𝗸|𝗥𝗘𝗟𝗔𝗧𝗘𝗗 𝗣𝗥𝗢𝗝𝗘𝗖𝗧𝗦)[ \t]*$/i
 
   def initialize(body, has_questions: false)
     @body = body.to_s
@@ -45,7 +46,8 @@ class ProposalParts
 
     skip = answer_block
     remaining = sections.reject { |part| part.match?(EXAMPLES) || (skip && part == skip) }
-    remaining.first.presence || sections.first
+    text = remaining.first.presence || sections.first
+    text.split(EXAMPLES_HEADING_LINE, 2).first.to_s.strip.presence || text
   end
 
   def preview(chars = 250) = letter.gsub(/\s+/, " ").strip.first(chars)
