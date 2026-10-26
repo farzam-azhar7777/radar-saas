@@ -24,7 +24,20 @@ module ProposalSpec
       "signature" => profile.signature_text.presence || profile.first_name,
       "skill_examples" => skill_examples
     }
-    PATH.read.gsub(/\{\{(\w+)\}\}/) { vars.fetch(Regexp.last_match(1)) }
+    text = PATH.read.gsub(/\{\{(\w+)\}\}/) { vars.fetch(Regexp.last_match(1)) }
+    personal_layout? ? with_layout(text, layout) : text
+  end
+
+  LAYOUT_FILE = "proposal-format.md".freeze
+  SHARED_LAYOUT_SECTIONS = [ "The structure that wins the work", "Shape" ].freeze
+
+  def layout = CareerFolder.read(LAYOUT_FILE).to_s.strip.presence
+
+  def personal_layout? = layout.present?
+
+  def with_layout(text, layout)
+    shared = SHARED_LAYOUT_SECTIONS.reduce(text) { |t, heading| t.sub(/^## #{Regexp.escape(heading)}$.*?(?=^## |\z)/m, "") }
+    "#{shared.rstrip}\n\n## Layout\n\n#{layout}\n\nWhere this layout disagrees with anything above, this layout wins.\n"
   end
 
   # Just the named section, for callers that only need part of the spec.

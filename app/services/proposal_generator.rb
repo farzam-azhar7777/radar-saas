@@ -232,16 +232,22 @@ class ProposalGenerator
     parts << ""
     parts << "THE OPENING DECIDES WHETHER THEY OPEN IT AT ALL."
     parts << "Two to three sentences, 45 words maximum: the hardest quantified proof you have that matches what THEY asked for, "\
-             "then a phrase that opens a loop and promises what comes next. Deliver on that promise immediately as a list."
+             "then a phrase that opens a loop and promises what comes next. " \
+             "#{ProposalSpec.personal_layout? ? 'Deliver on that promise in the very next paragraph.' : 'Deliver on that promise immediately as a list.'}"
     parts << ProposalSpec.opening_model
     parts << "If the first line could fit 200 different jobs, it is too broad. Rewrite it."
     parts << "Do NOT open with a question. Do NOT open by restating their brief (\"You need\", \"You want\", \"The system you describe\"). "\
              "Do NOT open with their name, title or years."
     parts << "At most ONE question in the whole letter, placed late. A list of questions reads as an interview they are conducting rather than "\
              "a specialist who has already solved this."
-    parts << "Make #{Profile.first_name} look formidable. The skills section must answer their requirement list point for point with specifics only someone "\
-             "who shipped it would know: gem names, versions, patterns, tooling."
-    parts << "Vary the wording, the projects and the skills every time. Do NOT vary the skeleton."
+    if ProposalSpec.personal_layout?
+      parts << "Make #{Profile.first_name} look formidable with specifics only someone who shipped it would know: gem names, versions, patterns, tooling."
+      parts << "Follow the Layout section of the spec exactly. Vary the wording and the projects every time."
+    else
+      parts << "Make #{Profile.first_name} look formidable. The skills section must answer their requirement list point for point with specifics only someone "\
+               "who shipped it would know: gem names, versions, patterns, tooling."
+      parts << "Vary the wording, the projects and the skills every time. Do NOT vary the skeleton."
+    end
     parts << ""
     parts << "ARCHETYPE: #{@archetype.label} (#{shape[:name]})"
     target = ((shape[:words].min + shape[:words].max) / 2.0).round
@@ -324,6 +330,19 @@ class ProposalGenerator
   # The names are deliberately NOT fixed. A scoped Rails migration and a vague
   # one-liner want different shapes, and forcing both into the same headings
   # would undo the thing that makes the proposals good.
+  def letter_parts_guidance
+    if ProposalSpec.personal_layout?
+      "YOU choose the names of the letter parts, and you name them for THIS job. The LAST letter part is\n" \
+      "always the sign-off. Write the examples block as the portfolio part; Radar places it just before\n" \
+      "the sign-off. Different jobs having differently named parts is correct, not a mistake."
+    else
+      "YOU choose the names of the letter parts, and you name them for THIS job. Opening, How I fit,\n" \
+      "My relevant skills, Ready to get started and Signature are a reasonable default set, but a post\n" \
+      "that wants a migration plan or a security review should have parts named for that. Different\n" \
+      "jobs having differently named parts is correct, not a mistake."
+    end
+  end
+
   def output_contract(questions)
     <<~TXT.strip
       Output ONLY the finished proposal inside a single fenced block. No commentary before or after. Plain text inside the block.
@@ -337,10 +356,7 @@ class ProposalGenerator
       - letter: a piece of the cover letter.
       - portfolio: the related projects block at the end.
 
-      YOU choose the names of the letter parts, and you name them for THIS job. Opening, How I fit,
-      My relevant skills, Ready to get started and Signature are a reasonable default set, but a post
-      that wants a migration plan or a security review should have parts named for that. Different
-      jobs having differently named parts is correct, not a mistake.
+      #{letter_parts_guidance}
 
       Rules for the parts:
       - A name is a short label, under 60 characters, plain text, no bold glyphs.
