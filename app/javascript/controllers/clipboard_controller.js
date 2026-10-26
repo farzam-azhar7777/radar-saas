@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Copies exactly the proposal text, nothing else, ready to paste into Upwork.
 export default class extends Controller {
   static targets = ["source", "button"]
-  static values = { text: String }
+  static values = { text: String, key: String }
 
   async copy(event) {
     event.preventDefault()
@@ -22,6 +22,8 @@ export default class extends Controller {
       document.execCommand("copy")
       ta.remove()
     }
+
+    if (this.keyValue) this.dispatch("copied", { detail: { key: this.keyValue } })
 
     // Only the label changes, so an icon beside it stays put.
     const button = this.hasButtonTarget ? this.buttonTarget : event.currentTarget

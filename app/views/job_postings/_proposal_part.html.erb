@@ -1,15 +1,25 @@
 <%# One named part of the proposal, with its own copy and its own rewrite. The
     name comes from whoever wrote it, so it fits this job. %>
-<article id="<%= dom_id(part) %>" data-controller="clipboard parts" class="group border-t border-rule first:border-t-0">
-  <div class="flex items-center gap-2.5 px-6 pt-4">
-    <h3 class="text-[0.8125rem] font-semibold text-muted"><%= part.display_label %></h3>
+<% number = local_assigns[:number] %>
+<% question = local_assigns[:question] %>
+<article id="<%= dom_id(part) %>" data-controller="clipboard parts" class="group border-t border-rule first:border-t-0 scroll-mt-6"
+         <% if local_assigns[:key] %>data-clipboard-key-value="<%= local_assigns[:key] %>"<% end %>>
+  <% if number %><span id="answer-<%= number %>" class="block scroll-mt-6"></span><% end %>
+  <% if question %>
+    <div class="px-6 pt-4">
+      <p class="text-[0.75rem] font-semibold uppercase tracking-wide text-brand">Question <%= number %> of <%= local_assigns[:total] %></p>
+      <p class="mt-1 text-[0.95rem] font-semibold leading-snug text-ink"><%= question %></p>
+    </div>
+  <% end %>
+  <div class="flex items-center gap-2.5 px-6 <%= question ? 'pt-2' : 'pt-4' %>">
+    <h3 class="text-[0.8125rem] font-semibold text-muted"><%= number ? "Your answer" : part.display_label %></h3>
     <span class="text-[0.75rem] tnum text-faint"><%= part.word_count %> words</span>
     <% if part.rewriting? %>
       <span class="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold text-brand"><span class="ping"></span> Rewriting</span>
     <% end %>
     <div class="ml-auto flex items-center gap-1 opacity-80 transition group-hover:opacity-100">
       <% unless part.rewriting? %>
-        <button data-action="clipboard#copy" data-clipboard-target="button" class="btn btn-ghost btn-sm"><%= icon(:copy) %> <span>Copy</span></button>
+        <button data-action="clipboard#copy" data-clipboard-target="button" class="btn <%= number ? 'btn-secondary' : 'btn-ghost' %> btn-sm"><%= icon(:copy) %> <span><%= number ? "Copy answer #{number}" : "Copy" %></span></button>
         <% unless locked %>
           <button type="button" data-action="parts#toggle" data-parts-target="opener" class="btn btn-ghost btn-sm">Rewrite</button>
         <% end %>
