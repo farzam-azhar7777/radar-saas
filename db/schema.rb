@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_110100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_104853) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -53,7 +53,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_110100) do
     t.string "client_city"
     t.string "client_country"
     t.boolean "client_financial_privacy"
+    t.integer "client_jobs_with_hires"
     t.string "client_last_contract_title"
+    t.integer "client_open_jobs"
     t.boolean "client_payment_verified"
     t.decimal "client_rating", precision: 3, scale: 2
     t.string "client_timezone"

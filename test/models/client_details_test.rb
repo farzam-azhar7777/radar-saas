@@ -33,10 +33,16 @@ class ClientDetailsTest < ActiveSupport::TestCase
 
   # Upwork shows this as "100% hire rate". It separates a client who hires from
   # one who collects proposals.
-  test "hire rate is hires over jobs posted" do
-    assert_equal 100, posting(client_total_hires: 24, client_total_posted_jobs: 24).client_hire_rate
-    assert_equal 50, posting(client_total_hires: 10, client_total_posted_jobs: 20).client_hire_rate
-    assert_nil posting(client_total_hires: 5, client_total_posted_jobs: 0).client_hire_rate
+  test "hire rate is jobs that ended in a hire over jobs posted, rounded up as Upwork does" do
+    assert_equal 65, posting(client_total_hires: 18, client_total_posted_jobs: 14, client_jobs_with_hires: 9).client_hire_rate
+    assert_equal 7, posting(client_total_hires: 1, client_total_posted_jobs: 15, client_jobs_with_hires: 1).client_hire_rate
+    assert_equal 100, posting(client_total_hires: 24, client_total_posted_jobs: 24, client_jobs_with_hires: 24).client_hire_rate
+    assert_equal 0, posting(client_total_hires: 0, client_total_posted_jobs: 6, client_jobs_with_hires: 0).client_hire_rate
+  end
+
+  test "hire rate is unknown until Upwork's figures are fetched" do
+    assert_nil posting(client_total_hires: 18, client_total_posted_jobs: 14).client_hire_rate
+    assert_nil posting(client_total_posted_jobs: 0, client_jobs_with_hires: 0).client_hire_rate
   end
 
   test "average per hire needs both spend and hires" do

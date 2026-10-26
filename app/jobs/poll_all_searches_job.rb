@@ -36,6 +36,7 @@ class PollAllSearchesJob < ApplicationJob
     # Ingest against every search, so a job found by a Tier B query can still be
     # re-homed to Rails and treated as Tier A.
     matched = IngestPostings.call(rows, searches: all_searches)
+    FetchClientStats.call(matched)
     hot, quiet = matched.partition(&:hot?)
 
     generate(hot)

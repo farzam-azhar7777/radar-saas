@@ -61,6 +61,17 @@ module JobSource
       }
     GQL
 
+    CLIENT_STATS = <<~GQL.freeze
+      query RadarClientStats($id: ID!) {
+        jobPubDetails(id: $id) {
+          buyer {
+            stats { totalJobsWithHires }
+            jobs { postedCount openCount }
+          }
+        }
+      }
+    GQL
+
     def initialize(client: Upwork::Client.new)
       @client = client
     end
@@ -132,6 +143,18 @@ module JobSource
         "preferred_locations" => Array(node.dig("contractorSelection", "location", "countries")),
         "detail_fetched_at" => Time.current
       }
+    end
+
+    def client_stats(upwork_id)
+      data = @client.query(CLIENT_STATS, { "id" => upwork_id })
+      ApiUsage.record!
+      buyer = data.dig("jobPubDetails", "buyer") or return {}
+
+      {
+        "client_total_posted_jobs" => buyer.dig("jobs", "postedCount"),
+        "client_jobs_with_hires" => buyer.dig("stats", "totalJobsWithHires"),
+        "client_open_jobs" => buyer.dig("jobs", "openCount")
+      }.compact
     end
 
     private
