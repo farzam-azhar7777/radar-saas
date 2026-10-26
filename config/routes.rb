@@ -38,6 +38,9 @@ Rails.application.routes.draw do
   get  "oauth/upwork/callback", to: "oauth/upwork#callback", as: :upwork_callback
 
   get "alerts", to: "alerts#index", as: :alerts, defaults: { format: :json }
+  post "alerts/:id/write", to: "alert_actions#write", as: :alert_write, defaults: { format: :json }
+  post "alerts/:id/dismiss", to: "alert_actions#dismiss", as: :alert_dismiss, defaults: { format: :json }
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   get "settings", to: "settings#show", as: :settings
 

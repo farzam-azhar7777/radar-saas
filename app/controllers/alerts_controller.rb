@@ -10,14 +10,16 @@ class AlertsController < ApplicationController
 
   def index
     hot = JobPosting.inbox.includes(:saved_search)
-                    .select(&:hot?)
+                    .select { |p| p.hot? && p.fresh? }
                     .sort_by { |p| -(p.created_at || p.published_at || Time.at(0)).to_i }
 
     render json: {
       hot: hot.first(LIMIT).map { |p|
         { id: p.id, title: p.title, score: p.score, budget: p.budget_label,
           search: p.saved_search&.name, url: job_posting_path(p),
-          ready: p.proposal_ready? }
+          ready: p.proposal_ready?, writing: p.generating?, posted: posted_label(p),
+          write_url: alert_write_path(p, token: AlertActionsController.token_for(p, "write")),
+          dismiss_url: alert_dismiss_path(p, token: AlertActionsController.token_for(p, "dismiss")) }
       },
       # Every proposal a generation produced, auto-written or asked for. Not a
       # one-part rewrite: he pressed that button and is looking at the result.
@@ -37,5 +39,14 @@ class AlertsController < ApplicationController
       digest_size: Radar.digest_size,
       inbox_count: JobPosting.inbox.count
     }
+  end
+
+  private
+
+  def posted_label(posting)
+    return nil unless posting.published_at
+
+    age = Time.current - posting.published_at
+    age < 1.minute ? "Posted just now" : "Posted #{helpers.time_ago_in_words(posting.published_at)} ago"
   end
 end

@@ -21,7 +21,8 @@ class JobPosting < ApplicationRecord
   scope :filtered_out, -> { where(status: "ignored").order(score: :desc) }
   scope :applied,      -> { where(status: "applied").order(applied_at: :desc) }
   scope :dismissed,    -> { where(status: "dismissed").order(published_at: :desc) }
-  scope :awaiting_digest, -> { where(status: "matched", notified_at: nil) }
+  scope :fresh, -> { where("COALESCE(job_postings.published_at, job_postings.created_at) >= ?", Radar.alert_max_age_hours.hours.ago) }
+  scope :awaiting_digest, -> { where(status: "matched", notified_at: nil).fresh }
 
   # Free-text filter across everything a person would recognise a job by.
   scope :matching, ->(term) {
@@ -119,6 +120,16 @@ class JobPosting < ApplicationRecord
   # A hot match is worth interrupting him for. Everything else waits for a digest.
   def hot?
     saved_search.present? && score.to_i >= saved_search.hot_threshold.to_i
+  end
+
+  def fresh?
+    (published_at || created_at || Time.current) >= Radar.alert_max_age_hours.hours.ago
+  end
+
+  def queue_generation!(feedback: nil)
+    update_column(:generation_queued_at, Time.current)
+    GenerateProposalJob.perform_later(self, feedback: feedback, force: true)
+    BroadcastPosting.call(self)
   end
 
   # A generation that has been queued longer than it could possibly take is not
