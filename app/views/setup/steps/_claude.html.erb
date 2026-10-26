@@ -25,7 +25,7 @@
           </ol>
         <% elsif check["fix"] == "login" %>
           <p class="font-semibold">Claude Code is installed but not signed in.</p>
-          <p class="hint mt-1">In a terminal, run <code class="rounded bg-sunk px-1.5 py-0.5 text-[0.8rem] text-ink">claude</code>, sign in with the Claude account you want proposals written on, then check again.</p>
+          <p class="hint mt-1">In a terminal, run <code class="rounded bg-sunk px-1.5 py-0.5 text-[0.8rem] text-ink"><%= Radar.claude_login_command %></code>, sign in with the Claude account you want proposals written on, then check again.</p>
         <% elsif check["fix"] == "model" %>
           <p class="font-semibold">Your Claude plan cannot use <%= Radar::DEFAULT_WRITER_MODEL %>.</p>
           <p class="hint mt-1">It is the model Radar's proposals were tuned on. Your plan's default model still writes good proposals; they may be a little less sharp.</p>

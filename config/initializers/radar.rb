@@ -16,6 +16,10 @@ module Radar
     ENV.fetch("CLAUDE_BIN", "claude")
   end
 
+  def self.in_container? = File.exist?("/.dockerenv")
+
+  def self.claude_login_command = in_container? ? "docker compose exec -it radar claude auth login" : "claude"
+
   def self.port = Integer(ENV.fetch("PORT", 8586))
 
   def self.url_options = { host: "localhost", port: port }

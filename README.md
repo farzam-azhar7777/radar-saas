@@ -55,6 +55,31 @@ on port 8586. Use `PORT=9000 bin/dev` for another port.
 Radar only runs while your computer is awake. After a sleep it notices that the
 scheduler stalled and restarts it, and the sidebar says so while it does.
 
+## Docker
+
+Instead of `bin/dev`, Radar can run in a container. Put your settings in `.env`:
+
+```bash
+RADAR_PROJECTS_DIR=/path/to/your/repositories
+RADAR_TIMEZONE=Asia/Karachi
+CLAUDE_CODE_OAUTH_TOKEN=   # from `claude setup-token`, or set ANTHROPIC_API_KEY instead
+```
+
+```bash
+docker compose up -d --build   # start, and restart after reboots
+docker compose logs -f         # watch it
+docker compose down            # stop
+```
+
+To sign Claude Code in without a token, run
+`docker compose exec -it radar claude auth login` once. The sign-in is kept
+across rebuilds.
+
+It serves http://localhost:8586 and keeps its data in `storage/`, the same as
+`bin/dev`. Your repositories are mounted read-only at the same path. Alerts
+come through the browser: keep a Radar tab open and allow notifications. macOS
+banners from the notifier are not available from inside a container.
+
 ## What Radar will never do
 
 Radar cannot submit a proposal, send a message or spend a Connect. Upwork
