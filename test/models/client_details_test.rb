@@ -40,6 +40,11 @@ class ClientDetailsTest < ActiveSupport::TestCase
     assert_equal 0, posting(client_total_hires: 0, client_total_posted_jobs: 6, client_jobs_with_hires: 0).client_hire_rate
   end
 
+  test "hire rate stops at 100 when Upwork counts more jobs with a hire than jobs posted" do
+    assert_equal 100, posting(client_total_hires: 56, client_total_posted_jobs: 43, client_jobs_with_hires: 48).client_hire_rate
+    assert_equal 98, posting(client_total_hires: 50, client_total_posted_jobs: 43, client_jobs_with_hires: 42).client_hire_rate
+  end
+
   test "hire rate is unknown until Upwork's figures are fetched" do
     assert_nil posting(client_total_hires: 18, client_total_posted_jobs: 14).client_hire_rate
     assert_nil posting(client_total_posted_jobs: 0, client_jobs_with_hires: 0).client_hire_rate
