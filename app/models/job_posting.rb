@@ -225,7 +225,7 @@ class JobPosting < ApplicationRecord
     posted = client_total_posted_jobs.to_i
     return nil unless posted.positive? && client_jobs_with_hires
 
-    (client_jobs_with_hires * 100.0 / posted).ceil
+    [ (client_jobs_with_hires * 100.0 / posted).ceil, 100 ].min
   end
 
   def client_avg_per_hire
