@@ -74,7 +74,6 @@
           <% if (chars = proposal.checks["characters"]).present? %>
             <span class="text-[0.8125rem] tnum <%= chars.to_i > ProposalCheck::MAX_CHARS ? 'font-semibold text-signal' : 'text-faint' %>"><%= number_with_delimiter(chars) %> of <%= number_with_delimiter(ProposalCheck::MAX_CHARS) %> characters</span>
           <% end %>
-          <%= button_to "Not interested", dismiss_job_posting_path(posting), class: "btn btn-ghost btn-sm", form: { class: "ml-auto" } %>
         </div>
       </div>
 

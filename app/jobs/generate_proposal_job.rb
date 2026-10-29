@@ -13,6 +13,8 @@ class GenerateProposalJob < ApplicationJob
   end
 
   def perform(job_posting, feedback: nil, force: false)
+    return job_posting.update_columns(generation_queued_at: nil) if job_posting.status == "dismissed"
+
     fetch_detail(job_posting)
 
     # The detail fetch is the first moment the client's location list exists,
@@ -56,7 +58,8 @@ class GenerateProposalJob < ApplicationJob
     announce(job_posting, proposal)
   rescue ProposalGenerator::GenerationError => e
     Rails.logger.error("[GenerateProposalJob] posting #{job_posting.id}: #{e.message}")
-    job_posting.update!(status: "generation_failed", generation_queued_at: nil,
+    still_wanted = JobPosting.where(id: job_posting.id).pick(:status) != "dismissed"
+    job_posting.update!(status: still_wanted ? "generation_failed" : "dismissed", generation_queued_at: nil,
                         generation_error: e.message.to_s.first(1000))
     broadcast(job_posting, nil)
   end
