@@ -33,6 +33,10 @@
     <%= button_to refresh_job_posting_path(@posting), class: "btn btn-secondary btn-sm",
           title: "Re-check the live bid count and client stats on Upwork. One API call." do %><%= icon(:refresh) %> Refresh<% end %>
     <%= link_to @posting.upwork_url, target: "_blank", rel: "noopener", class: "btn btn-secondary btn-sm" do %>Open on Upwork <%= icon(:external) %><% end %>
+    <% unless %w[dismissed applied].include?(@posting.status) %>
+      <%= button_to "Not interested", dismiss_job_posting_path(@posting), class: "btn btn-ghost btn-sm",
+            title: @posting.generating? ? "Hides the job. The proposal already being written still finishes." : "Hides the job. Nothing is written for it." %>
+    <% end %>
   </div>
 </div>
 
