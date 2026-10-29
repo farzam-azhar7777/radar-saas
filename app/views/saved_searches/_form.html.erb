@@ -32,6 +32,12 @@
       <%= f.number_field :min_hourly, step: 1, class: "input tnum" %>
     </div>
   </div>
+  <div class="border-t border-rule pt-5">
+    <p class="field-label">Limits</p>
+    <p class="field-hint !mt-0 mb-3">A new job outside any limit goes to Passed over: no alert, no proposal. A job with no figure for a stat is kept. Leave a box empty for no limit.</p>
+    <%= render "saved_searches/limits_fields", limits: search.search_limits,
+               name_prefix: "saved_search", id_prefix: [ local_assigns[:namespace], "saved_search" ].compact.join("_") %>
+  </div>
   <div>
     <%= f.label :template_name, "Proposal shape", class: "field-label" %>
     <%= f.select :template_name, CareerData.instance.templates.map { |t| [ t.tr("-", " ").capitalize, t ] }, { include_blank: "No template" }, class: "select" %>

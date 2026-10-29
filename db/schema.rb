@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_104853) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_143745) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -273,6 +273,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_104853) do
     t.json "excluded_keywords", default: []
     t.integer "hot_threshold", default: 85, null: false
     t.datetime "last_polled_at"
+    t.json "limits", default: {}, null: false
     t.decimal "min_fixed", precision: 12, scale: 2
     t.decimal "min_hourly", precision: 10, scale: 2
     t.string "name", null: false

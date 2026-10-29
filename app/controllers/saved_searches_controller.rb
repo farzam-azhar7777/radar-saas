@@ -40,9 +40,10 @@ class SavedSearchesController < ApplicationController
     return redirect_to(saved_searches_path, alert: "Tick at least one search.") if searches.empty?
 
     changes = bulk_changes
-    return redirect_to(saved_searches_path, alert: "Choose something to change.") if changes.empty?
+    limits = SearchLimits.clean(params.dig(:bulk, :limits))
+    return redirect_to(saved_searches_path, alert: "Choose something to change.") if changes.empty? && limits.empty?
 
-    failed = searches.reject { |s| s.update(changes) }
+    failed = searches.reject { |s| s.update(changes.merge("limits" => s.search_limits.to_h.deep_merge(limits))) }
     saved = searches.size - failed.size
     notice = "Updated #{pluralize(saved, 'search')}."
     return redirect_to(saved_searches_path, notice: notice) if failed.empty?
@@ -78,7 +79,8 @@ class SavedSearchesController < ApplicationController
   def search_params
     permitted = params.require(:saved_search)
                       .permit(:name, :template_name, :threshold, :hot_threshold, :auto_generate, :position, :min_hourly, :min_fixed,
-                              :active, :terms_text, :excluded_keywords_text)
+                              :active, :terms_text, :excluded_keywords_text,
+                              limits: SearchLimits::STATS.to_h { |s| [ s.key, SearchLimits::BOUNDS ] })
     permitted[:terms] = split_list(permitted.delete(:terms_text))
     permitted[:excluded_keywords] = split_list(permitted.delete(:excluded_keywords_text))
     permitted

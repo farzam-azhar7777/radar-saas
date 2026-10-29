@@ -1,0 +1,17 @@
+<% limits = local_assigns.fetch(:limits, SearchLimits.new({})) %>
+<div class="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+  <% SearchLimits::STATS.each do |stat| %>
+    <% ids = SearchLimits::BOUNDS.to_h { |bound| [ bound, "#{id_prefix}_limits_#{stat.key}_#{bound}" ] } %>
+    <fieldset class="min-w-0">
+      <legend class="text-[0.8125rem] font-semibold"><%= stat.label %><% if (unit = "#{stat.prefix}#{stat.suffix}").present? %> <span class="font-normal text-faint"><%= unit %></span><% end %></legend>
+      <div class="mt-1 flex items-center gap-2">
+        <% SearchLimits::BOUNDS.each_with_index do |bound, i| %>
+          <% if i.positive? %><span class="text-[0.8125rem] text-faint">to</span><% end %>
+          <label for="<%= ids[bound] %>" class="sr-only"><%= stat.label %> <%= bound %></label>
+          <%= number_field_tag "#{name_prefix}[limits][#{stat.key}][#{bound}]", limits.bound(stat.key, bound), id: ids[bound],
+                min: 0, step: stat.step, placeholder: local_assigns.fetch(:placeholder, bound), class: "input tnum !mt-0 min-w-0 flex-1" %>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+</div>
