@@ -31,6 +31,11 @@
         <%= number_field_tag "bulk[hot_threshold]", nil, id: "bulk_hot_threshold", min: 0, max: 100, placeholder: "as is", class: "input tnum !w-24" %>
       </div>
       <button class="btn btn-secondary" data-bulk-target="apply" disabled>Apply to selected</button>
+      <details class="w-full border-t border-rule pt-3">
+        <summary class="cursor-pointer text-[0.8125rem] font-semibold text-muted hover:text-ink">Set limits on the selected searches</summary>
+        <p class="field-hint mb-3">Only the boxes you fill change. Each search keeps its other limits.</p>
+        <%= render "limits_fields", name_prefix: "bulk", id_prefix: "bulk", placeholder: "as is" %>
+      </details>
     <% end %>
   <% end %>
 
@@ -44,6 +49,9 @@
             <p class="font-semibold"><%= s.name %></p>
             <div class="mt-2 flex flex-wrap gap-1.5"><% s.terms_list.each do |t| %><span class="chip chip-outline"><%= t %></span><% end %></div>
             <% if s.excluded_keywords_list.any? %><p class="mt-2 text-[0.8125rem] text-faint">Never: <%= s.excluded_keywords_list.join(", ") %></p><% end %>
+            <% if (limits = s.search_limits.summary).any? %>
+              <p class="mt-2 text-[0.8125rem] text-muted"><span class="font-semibold text-ink">Limits:</span> <%= limits.join(" · ") %></p>
+            <% end %>
           </div>
           <div class="text-[0.8125rem] tnum">
             <p><span class="text-muted">Inbox at</span> <span class="font-semibold"><%= s.threshold %></span></p>
