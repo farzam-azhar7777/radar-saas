@@ -1,7 +1,7 @@
 class KeepWithinLimits
-  def self.call(postings)
+  def self.call(postings, limits: JobLimits.current)
     Array(postings).reject do |posting|
-      breach = posting.saved_search&.search_limits&.breach(posting)
+      breach = limits.breach(posting)
       next false unless breach
 
       reason = { "key" => "outside_limits", "points" => 0, "max" => 100, "note" => breach }

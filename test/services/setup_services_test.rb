@@ -47,7 +47,7 @@ class SetupServicesTest < ActiveSupport::TestCase
         "client_rating" => 4.9, "published_at" => (now - 1.hour).iso8601 },
       { "upwork_id" => "2", "title" => "Logo design", "description" => "Figma", "published_at" => (now - 5.hours).iso8601 }
     ]
-    search = SavedSearch.new(name: "Rails", terms: [ "rails" ], threshold: 60, hot_threshold: 95, min_hourly: 25)
+    search = SavedSearch.new(name: "Rails", terms: [ "rails" ], threshold: 60, hot_threshold: 95)
     preview = SearchPreview.new(search)
     preview.define_singleton_method(:fetch) { |*| rows }
 
