@@ -33,11 +33,14 @@ class JobPosting < ApplicationRecord
           "OR LOWER(COALESCE(client_country, \'\')) LIKE :q OR LOWER(COALESCE(category, \'\')) LIKE :q", q: like)
   }
 
+  STRONG_RANK = "(CASE WHEN job_postings.score >= COALESCE((SELECT saved_searches.hot_threshold FROM saved_searches " \
+                "WHERE saved_searches.id = job_postings.saved_search_id), 101) THEN 0 ELSE 1 END)".freeze
+
   # Ordering people actually want when triaging bids. "Fewest bids" is the one
   # that has no equivalent on Upwork itself.
   SORTS = {
     "newest"      => [ "Newest",      Arel.sql("published_at DESC") ],
-    "fit"         => [ "Best fit",    Arel.sql("score DESC, published_at DESC") ],
+    "fit"         => [ "Best fit",    Arel.sql("#{STRONG_RANK} ASC, CASE WHEN #{STRONG_RANK} = 0 THEN NULL ELSE score END DESC, published_at DESC") ],
     "competition" => [ "Fewest bids", Arel.sql("COALESCE(total_applicants, 999999) ASC, published_at DESC") ],
     "budget"      => [ "Best paid",   Arel.sql("COALESCE(fixed_amount, hourly_max, hourly_min, 0) DESC, score DESC") ]
   }.freeze
