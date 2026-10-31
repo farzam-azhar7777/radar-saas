@@ -14,7 +14,7 @@ class RefreshPostingTest < ActiveSupport::TestCase
 
   setup do
     @search = SavedSearch.create!(name: "S#{SecureRandom.hex(3)}", terms: [ "rails" ],
-                                  threshold: 70, hot_threshold: 70, min_hourly: 25, min_fixed: 500)
+                                  threshold: 70, hot_threshold: 70)
     @posting = JobPosting.create!(
       upwork_id: "job-1", title: "Senior Full-Stack Developer for Car Rental Platform",
       description: "Ruby on Rails and React work on a rental platform.", status: "matched",

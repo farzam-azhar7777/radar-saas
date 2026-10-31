@@ -9,9 +9,6 @@ class SavedSearch < ApplicationRecord
   validates :threshold, numericality: { in: 0..100 }
   validates :hot_threshold, numericality: { in: 0..100 }
   validate  { errors.add(:hot_threshold, "must be at or above the threshold") if hot_threshold.to_i < threshold.to_i }
-  validate  { search_limits.errors.each { |problem| errors.add(:base, problem.upcase_first) } }
-
-  before_save { self.limits = search_limits.to_h }
 
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:position, :name) }
@@ -34,8 +31,6 @@ class SavedSearch < ApplicationRecord
   def effective_weights
     DEFAULT_WEIGHTS.merge(weights.presence || {})
   end
-
-  def search_limits = SearchLimits.new(limits)
 
   def terms_list
     Array(terms).map(&:to_s).map(&:strip).reject(&:blank?)

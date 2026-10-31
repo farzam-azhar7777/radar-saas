@@ -147,13 +147,15 @@ class ScoreJobPosting
     [ fraction, "Overlaps past work: #{hits.take(5).join(', ')}" ]
   end
 
+  def limits = @limits ||= JobLimits.current
+
   def budget_component
-    floor = @search.min_hourly&.to_f
+    floor = (limits.bound("hourly_rate", "min") || Profile.current.hourly_rate)&.to_f
     top   = @posting.hourly_max&.to_f || @posting.hourly_min&.to_f
 
     if @posting.fixed_amount.present?
       amount = @posting.fixed_amount.to_f
-      min_fixed = (@search.min_fixed.presence || DEFAULT_MIN_FIXED).to_f
+      min_fixed = (limits.bound("fixed_price", "min") || DEFAULT_MIN_FIXED).to_f
       return [ 1.0, "Fixed $#{amount.to_i}" ] if amount >= min_fixed
       return [ 0.25, "Fixed $#{amount.to_i}, under your $#{min_fixed.to_i} floor" ] if amount >= min_fixed / 2
       return [ 0.0, "Fixed $#{amount.to_i}, far under your $#{min_fixed.to_i} floor" ]

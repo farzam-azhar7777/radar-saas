@@ -1,6 +1,6 @@
 module Setup
   class SearchesController < BaseController
-    PERMITTED = %i[name terms_text excluded_keywords_text threshold hot_threshold auto_generate template_name min_hourly].freeze
+    PERMITTED = %i[name terms_text excluded_keywords_text threshold hot_threshold auto_generate template_name].freeze
 
     def suggest
       SearchSuggester.start!
@@ -45,7 +45,6 @@ module Setup
         hot_threshold: attrs[:hot_threshold].presence || 80,
         auto_generate: attrs[:auto_generate] == "1",
         template_name: attrs[:template_name].presence,
-        min_hourly: attrs[:min_hourly].presence || Profile.current.hourly_rate,
         active: true,
         position: (SavedSearch.maximum(:position) || 0) + 1
       }

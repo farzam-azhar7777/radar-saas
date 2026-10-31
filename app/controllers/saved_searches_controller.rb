@@ -5,6 +5,8 @@ class SavedSearchesController < ApplicationController
 
   def index
     @searches = SavedSearch.ordered
+    @limits = JobLimits.current
+    @impact = @limits.impact(JobLimits.recent_matches)
   end
 
   def new
@@ -40,10 +42,9 @@ class SavedSearchesController < ApplicationController
     return redirect_to(saved_searches_path, alert: "Tick at least one search.") if searches.empty?
 
     changes = bulk_changes
-    limits = SearchLimits.clean(params.dig(:bulk, :limits))
-    return redirect_to(saved_searches_path, alert: "Choose something to change.") if changes.empty? && limits.empty?
+    return redirect_to(saved_searches_path, alert: "Choose something to change.") if changes.empty?
 
-    failed = searches.reject { |s| s.update(changes.merge("limits" => s.search_limits.to_h.deep_merge(limits))) }
+    failed = searches.reject { |s| s.update(changes) }
     saved = searches.size - failed.size
     notice = "Updated #{pluralize(saved, 'search')}."
     return redirect_to(saved_searches_path, notice: notice) if failed.empty?
@@ -78,9 +79,8 @@ class SavedSearchesController < ApplicationController
 
   def search_params
     permitted = params.require(:saved_search)
-                      .permit(:name, :template_name, :threshold, :hot_threshold, :auto_generate, :position, :min_hourly, :min_fixed,
-                              :active, :terms_text, :excluded_keywords_text,
-                              limits: SearchLimits::STATS.to_h { |s| [ s.key, SearchLimits::BOUNDS ] })
+                      .permit(:name, :template_name, :threshold, :hot_threshold, :auto_generate, :position,
+                              :active, :terms_text, :excluded_keywords_text)
     permitted[:terms] = split_list(permitted.delete(:terms_text))
     permitted[:excluded_keywords] = split_list(permitted.delete(:excluded_keywords_text))
     permitted

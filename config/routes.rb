@@ -23,6 +23,9 @@ Rails.application.routes.draw do
     member { post :rewrite }
   end
 
+  resource :job_limits, path: "searches/limits", only: :update do
+    get :preview
+  end
   resources :saved_searches, path: "searches" do
     member { post :toggle }
     collection { post :bulk }
