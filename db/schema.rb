@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_143745) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_080750) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -89,6 +89,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_143745) do
     t.string "rate_proposed"
     t.json "raw_payload", default: {}
     t.datetime "refreshed_at"
+    t.integer "repost_count", default: 0, null: false
+    t.integer "repost_of_id"
     t.integer "saved_search_id"
     t.integer "score"
     t.json "score_reasons", default: []
@@ -100,8 +102,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_143745) do
     t.integer "total_applicants"
     t.datetime "updated_at", null: false
     t.string "upwork_id", null: false
+    t.index ["client_country", "created_at"], name: "index_job_postings_on_client_country_and_created_at"
     t.index ["notified_at"], name: "index_job_postings_on_notified_at"
     t.index ["outcome"], name: "index_job_postings_on_outcome"
+    t.index ["repost_of_id"], name: "index_job_postings_on_repost_of_id"
     t.index ["saved_search_id"], name: "index_job_postings_on_saved_search_id"
     t.index ["status", "published_at"], name: "index_job_postings_on_status_and_published_at"
     t.index ["upwork_id"], name: "index_job_postings_on_upwork_id", unique: true
@@ -298,6 +302,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_143745) do
   add_foreign_key "feedbacks", "lessons"
   add_foreign_key "feedbacks", "proposals"
   add_foreign_key "feedbacks", "saved_searches"
+  add_foreign_key "job_postings", "job_postings", column: "repost_of_id"
   add_foreign_key "job_postings", "saved_searches"
   add_foreign_key "knowledge_projects", "knowledge_scans"
   add_foreign_key "knowledge_repos", "knowledge_projects"
