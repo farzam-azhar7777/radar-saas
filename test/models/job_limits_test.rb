@@ -1,16 +1,23 @@
 require "test_helper"
 
-class SearchLimitsTest < ActiveSupport::TestCase
+class JobLimitsTest < ActiveSupport::TestCase
   def posting(**attrs)
     JobPosting.new({ upwork_id: SecureRandom.hex(6), title: "Rails dev" }.merge(attrs))
   end
 
-  def limits(raw) = SearchLimits.new(raw)
+  def limits(raw) = JobLimits.new(raw)
 
   test "blank boxes are dropped and numbers are kept as numbers" do
     raw = { "hire_rate" => { "min" => "50", "max" => "" }, "bids" => { "min" => "", "max" => "" },
             "client_rating" => { "min" => "4.5" }, "nonsense" => { "min" => "3" } }
-    assert_equal({ "hire_rate" => { "min" => 50 }, "client_rating" => { "min" => 4.5 } }, SearchLimits.clean(raw))
+    assert_equal({ "hire_rate" => { "min" => 50 }, "client_rating" => { "min" => 4.5 } }, JobLimits.clean(raw))
+  end
+
+  test "one set of limits is saved for every search and read back" do
+    assert_not JobLimits.current.any?
+
+    assert limits("bids" => { "max" => "20" }).save
+    assert_equal({ "bids" => { "max" => 20 } }, JobLimits.current.to_h)
   end
 
   test "a job inside every limit passes" do
@@ -42,18 +49,36 @@ class SearchLimitsTest < ActiveSupport::TestCase
     assert_nil l.breach(posting), "a new client has no hire rate yet"
   end
 
-  test "a min above its max, a negative or a word is refused" do
-    search = SavedSearch.new(name: "AI", terms: [ "ai" ], threshold: 70, hot_threshold: 80,
-                             limits: { "bids" => { "min" => "30", "max" => "10" }, "hire_rate" => { "min" => "-5" },
-                                       "client_spent" => { "min" => "lots" } })
-    assert_not search.valid?
-    assert_includes search.errors.full_messages, "Bids so far min must be at or below its max"
-    assert_includes search.errors.full_messages, "Client hire rate min cannot be negative"
-    assert_includes search.errors.full_messages, "Client total spent min must be a number"
+  test "a min above its max, a negative or a word is refused and not saved" do
+    l = limits("bids" => { "min" => "30", "max" => "10" }, "hire_rate" => { "min" => "-5" }, "client_spent" => { "min" => "lots" })
+    assert_not l.save
+    assert_includes l.errors, "bids so far min must be at or below its max"
+    assert_includes l.errors, "client hire rate min cannot be negative"
+    assert_includes l.errors, "client total spent min must be a number"
+    assert_not JobLimits.current.any?
   end
 
-  test "the list line reads like a sentence" do
+  test "the summary reads like a sentence" do
     l = limits("hire_rate" => { "min" => 50 }, "bids" => { "max" => 20 }, "client_spent" => { "min" => 1000, "max" => 50_000 })
     assert_equal [ "Bids so far at most 20", "Client hire rate at least 50%", "Client total spent $1,000 to $50,000" ], l.summary
+  end
+
+  test "impact counts what a set of limits would have passed over, and why" do
+    jobs = [ posting(total_applicants: 40), posting(total_applicants: 45), posting(fixed_amount: 100), posting(total_applicants: 3) ]
+    impact = limits("bids" => { "max" => 20 }, "fixed_price" => { "min" => 500 }).impact(jobs)
+
+    assert_equal 4, impact[:total]
+    assert_equal 3, impact[:passed_over]
+    assert_equal [ [ "Bids so far", 2 ], [ "Fixed price", 1 ] ], impact[:by_stat]
+  end
+
+  test "the hourly minimum is also the scoring floor, falling back to the profile rate" do
+    search = SavedSearch.new(name: "t", terms: [ "rails" ], threshold: 70)
+    cheap = posting(title: "Rails", hourly_max: 30)
+    note = -> { ScoreJobPosting.call(cheap, saved_search: search).reasons.find { |r| r["key"] == "budget" }["note"] }
+
+    assert_equal "Pays up to $30/hr", note.call
+    limits("hourly_rate" => { "min" => 40 }).save
+    assert_equal "Tops out at $30/hr, under your $40 floor", note.call
   end
 end

@@ -1,0 +1,61 @@
+<% open = limits.errors.any? %>
+<section id="limits" class="panel mt-6 overflow-hidden" data-controller="reveal">
+  <div class="flex flex-wrap items-start gap-x-6 gap-y-3 px-5 py-4">
+    <div class="min-w-[min(100%,18rem)] flex-1">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 class="heading">Limits</h2>
+        <span class="text-[0.8125rem] text-muted">Apply to every search</span>
+      </div>
+      <% if (summary = limits.summary).any? %>
+        <ul class="mt-2.5 flex flex-wrap gap-1.5"><% summary.each do |line| %><li class="chip chip-outline"><%= line %></li><% end %></ul>
+      <% else %>
+        <p class="hint mt-1">None set. Every job that scores high enough reaches your inbox.</p>
+      <% end %>
+    </div>
+    <% if limits.any? %>
+      <div class="max-w-xs"><%= render "job_limits/impact", limits: limits, impact: impact, preview: false %></div>
+    <% end %>
+    <button type="button" class="btn btn-secondary btn-sm" data-action="reveal#toggle" data-reveal-target="toggle" aria-expanded="<%= open %>" aria-controls="limits-editor">
+      <%= icon(:pen) %> <%= limits.any? ? "Edit limits" : "Set limits" %>
+    </button>
+  </div>
+
+  <div id="limits-editor" class="border-t border-rule bg-sunk px-5 py-5" data-reveal-target="panel" <%= "hidden" unless open %>>
+    <%= form_with url: job_limits_path, method: :patch,
+          data: { controller: "limits-preview", limits_preview_url_value: preview_job_limits_path, action: "input->limits-preview#refresh" } do %>
+      <p class="hint mb-5 max-w-[70ch]">A new job outside a limit goes to Passed over: no alert, no proposal. When Upwork gives no figure for a stat, as with a new client's hire rate, that limit is skipped. Leave a box empty for no limit.</p>
+
+      <div class="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+        <% JobLimits::GROUPS.each do |group, title| %>
+          <fieldset class="min-w-0">
+            <legend class="mb-2 text-[0.75rem] font-semibold uppercase tracking-wide text-faint"><%= title %></legend>
+            <div class="divide-y divide-rule rounded-[10px] border border-rule bg-paper">
+              <% JobLimits::STATS.select { |s| s.group == group }.each do |stat| %>
+                <div class="grid grid-cols-[minmax(0,1fr)_5.5rem_auto_5.5rem] items-center gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_7rem_auto_7rem]">
+                  <span class="min-w-0 text-[0.875rem] font-semibold">
+                    <%= stat.label %>
+                    <% if (unit = "#{stat.prefix}#{stat.suffix}").present? %><span class="font-normal text-faint"><%= unit %></span><% end %>
+                  </span>
+                  <% JobLimits::BOUNDS.each_with_index do |bound, i| %>
+                    <% if i.positive? %><span class="text-[0.8125rem] text-faint" aria-hidden="true">to</span><% end %>
+                    <%= number_field_tag "limits[#{stat.key}][#{bound}]", limits.bound(stat.key, bound), id: "limits_#{stat.key}_#{bound}",
+                          min: 0, step: stat.step, placeholder: bound == "min" ? "No min" : "No max",
+                          "aria-label": "#{stat.noun} #{bound == 'min' ? 'minimum' : 'maximum'}", class: "input tnum !mt-0 !h-9 min-w-0" %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </fieldset>
+        <% end %>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule pt-4">
+        <button class="btn btn-primary">Save limits</button>
+        <button type="button" class="btn btn-ghost" data-action="reveal#toggle">Cancel</button>
+        <div class="min-w-[min(100%,16rem)] flex-1 sm:text-right" data-limits-preview-target="output">
+          <%= render "job_limits/impact", limits: limits, impact: impact, preview: true %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>
