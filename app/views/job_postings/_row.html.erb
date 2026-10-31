@@ -9,6 +9,7 @@
       <%= link_to posting.title, job_posting_path(posting), data: { keynav_target: "link" },
             class: "truncate text-[0.975rem] font-semibold leading-snug hover:underline hover:underline-offset-2" %>
       <% if posting.hot? %><span class="chip chip-signal flex-none">Strong</span><% end %>
+      <% if posting.reposted? %><span class="chip chip-warn flex-none" title="<%= posting.repost_note %>"><%= posting.repost_label %></span><% end %>
     </div>
     <p class="mt-1 line-clamp-1 text-[0.8125rem] text-muted"><%= posting.description.to_s.squish.truncate(170) %></p>
     <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-muted">
