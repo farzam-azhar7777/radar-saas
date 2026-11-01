@@ -25,7 +25,7 @@
     <% @postings.each do |posting| %>
       <div class="px-5 py-4">
         <div class="flex items-start gap-4">
-          <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
+          <span class="dial <%= dial_class(posting.score, strong: posting.hot?) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
           <div class="min-w-0 flex-1">
             <%= link_to posting.title, job_posting_path(posting), class: "block truncate font-semibold hover:underline hover:underline-offset-2" %>
             <p class="mt-0.5 flex flex-wrap gap-x-4 text-[0.8125rem] text-muted">

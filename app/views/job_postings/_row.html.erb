@@ -1,14 +1,14 @@
 <div id="<%= dom_id(posting) %>" data-keynav-target="item"
      class="grid grid-cols-[3.5rem_1fr] gap-x-5 gap-y-3 border-b border-rule px-5 py-4 transition-colors last:border-0 hover:bg-surface md:grid-cols-[3.5rem_1fr_12rem_8rem] md:items-center">
   <div class="row-span-2 md:row-span-1">
-    <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>" title="Fit <%= posting.score %> of 100"><span><%= posting.score %></span></span>
+    <span class="dial <%= dial_class(posting.score, strong: posting.hot?) %>" style="--pct: <%= posting.score.to_i %>" title="Fit <%= posting.score %> of 100"><span><%= posting.score %></span></span>
   </div>
 
   <div class="min-w-0">
     <div class="flex items-center gap-2">
       <%= link_to posting.title, job_posting_path(posting), data: { keynav_target: "link" },
             class: "truncate text-[0.975rem] font-semibold leading-snug hover:underline hover:underline-offset-2" %>
-      <% if posting.hot? %><span class="chip chip-signal flex-none">Strong</span><% end %>
+      <% if posting.hot? %><span class="chip chip-good flex-none">Strong</span><% end %>
       <% if posting.reposted? %><span class="chip chip-warn flex-none" title="<%= posting.repost_note %>"><%= posting.repost_label %></span><% end %>
     </div>
     <p class="mt-1 line-clamp-1 text-[0.8125rem] text-muted"><%= posting.description.to_s.squish.truncate(170) %></p>

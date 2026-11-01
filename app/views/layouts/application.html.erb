@@ -51,7 +51,7 @@
           <div>
             <div class="flex items-baseline justify-between text-[0.8125rem]">
               <span class="text-muted">Written today</span>
-              <span class="tnum font-semibold <%= 'text-signal' if stats[:count] >= stats[:cap] %>"><%= stats[:count] %> of <%= stats[:cap] %></span>
+              <span class="tnum font-semibold <%= 'text-warn' if stats[:count] >= stats[:cap] %>"><%= stats[:count] %> of <%= stats[:cap] %></span>
             </div>
             <div class="meter mt-1.5"><i style="width: <%= [ (stats[:count] * 100.0 / [ stats[:cap], 1 ].max).round, 100 ].min %>%"></i></div>
             <p class="mt-1.5 text-[0.75rem] tnum text-faint"><%= ApiUsage.used_today %> Upwork calls today</p>

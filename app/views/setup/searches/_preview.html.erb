@@ -10,7 +10,7 @@
       <p class="text-[0.875rem]">
         About <strong class="tnum"><%= result.per_day %></strong> jobs a day match these words.
         Of the latest <%= result.seen %>, <strong class="tnum"><%= result.inbox %></strong> would reach your inbox and
-        <strong class="tnum <%= 'text-signal' if result.hot.positive? %>"><%= result.hot %></strong> would alert you.
+        <strong class="tnum <%= 'text-good' if result.hot.positive? %>"><%= result.hot %></strong> would alert you.
       </p>
       <% if result.inbox.zero? %>
         <p class="hint mt-1">Nothing clears <%= search.threshold %>. Lower "Inbox at", or add skills to your profile that these jobs ask for.</p>
