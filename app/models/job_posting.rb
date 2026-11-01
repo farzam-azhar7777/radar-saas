@@ -1,6 +1,8 @@
 class JobPosting < ApplicationRecord
   belongs_to :saved_search, optional: true
   has_many :proposals, -> { order(version: :desc) }, dependent: :destroy
+  belongs_to :repost_of, class_name: "JobPosting", optional: true
+  has_many :reposts, class_name: "JobPosting", foreign_key: :repost_of_id, dependent: :nullify
 
   STATUSES = %w[new matched ignored dismissed applied generation_failed].freeze
 
@@ -75,6 +77,24 @@ class JobPosting < ApplicationRecord
 
     "#{total_applicants} #{'bid'.pluralize(total_applicants)}"
   end
+
+  def reposted? = repost_count.positive?
+
+  def times_posted = repost_count + 1
+
+  def reposted_too_often? = repost_count >= EarlierCopies::SKIP_FROM
+
+  def repost_label = "Posted #{times_posted} times"
+
+  def repost_note
+    first = repost_of&.published_at || repost_of&.created_at
+    since = first ? " since #{first.strftime('%b %-d')}" : ""
+    advice = reposted_too_often? ? "A client who keeps reposting the same job is often not really hiring." :
+                                   "Sometimes a relist, sometimes a client who never hires. Check their hire rate before you bid."
+    "#{repost_label}#{since}. #{advice}"
+  end
+
+  def repost_reason = { "key" => "reposted", "points" => 0, "max" => 100, "note" => repost_note }
 
   def screening_questions_list = Array(screening_questions).map(&:to_s).reject(&:blank?)
 

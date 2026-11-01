@@ -38,20 +38,27 @@ class IngestPostings
       outcome = ScoreJobPosting.call(posting, saved_search: owner, searches: @searches)
       posting.score = outcome.score
       posting.score_reasons = outcome.reasons
+      EarlierCopies.flag!(posting)
 
       # Upwork tells us when Farzam already bid. Those go straight to applied
       # rather than cluttering the inbox.
       posting.status =
         if posting.already_applied?  then "applied"
         elsif posting.location_blocked? then "ignored"
+        elsif posting.reposted_too_often? then "ignored"
         elsif outcome.score >= owner.threshold then "matched"
         else "ignored"
         end
       posting.applied_at = Time.current if posting.status == "applied"
+      posting.score_reasons += [ posting.repost_reason ] if posting.status == "ignored" && posting.reposted_too_often?
 
-      matched << posting if posting.save && posting.status == "matched"
+      next unless posting.save
+
+      EarlierCopies.pass_over_unwritten(posting) if posting.reposted_too_often?
+      matched << posting if posting.status == "matched"
     end
 
     matched
   end
+
 end

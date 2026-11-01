@@ -40,6 +40,15 @@
   </div>
 </div>
 
+<% if @posting.reposted? %>
+  <div class="notice notice-warn mt-5">
+    <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+    <p><%= @posting.repost_note %>
+      <% if @posting.repost_of %><%= link_to "See the first posting", job_posting_path(@posting.repost_of), class: "ml-1 whitespace-nowrap font-semibold underline underline-offset-2" %><% end %>
+    </p>
+  </div>
+<% end %>
+
 <div class="mt-6"><%= render "job_postings/client", posting: @posting %></div>
 
 <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
