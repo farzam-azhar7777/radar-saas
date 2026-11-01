@@ -13,7 +13,7 @@
   <div class="panel mt-5 divide-y divide-rule overflow-hidden">
     <% @postings.each do |posting| %>
       <div class="grid grid-cols-[3.5rem_1fr] gap-x-5 gap-y-3 px-5 py-4 md:grid-cols-[3.5rem_1fr_auto] md:items-start">
-        <span class="dial <%= dial_class(posting.score) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
+        <span class="dial <%= dial_class(posting.score, strong: posting.hot?) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
         <div class="min-w-0">
           <p class="truncate font-semibold"><%= posting.title %></p>
           <p class="mt-1 flex flex-wrap gap-x-4 text-[0.8125rem] text-muted">

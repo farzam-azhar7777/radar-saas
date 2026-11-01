@@ -27,7 +27,7 @@
   --color-brand-soft: #e2f1ec;
   --color-on-brand: #ffffff;
 
-  --color-signal: #d8354f;
+  --color-signal: #be2a43;
   --color-signal-soft: #fdebee;
   --color-good: #0b6b55;
   --color-good-soft: #e2f1ec;
@@ -178,7 +178,7 @@
   .notice-info { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-rule); }
 
   /* --- the fit reading ----------------------------------------------------
-     A ring whose sweep is the score. Coral only in the strong band. */
+     A ring whose sweep is the score. Green only in the strong band. */
   .dial {
     --fill: var(--color-rule-strong);
     position: relative; display: inline-grid; place-items: center; flex: none;
@@ -188,7 +188,7 @@
   }
   .dial::before { content: ""; position: absolute; inset: 4px; border-radius: 999px; background: var(--color-paper); }
   .dial > span { position: relative; }
-  .dial-strong { --fill: var(--color-signal); color: var(--color-signal); }
+  .dial-strong { --fill: var(--color-good); color: var(--color-good); }
   .dial-good { --fill: var(--color-ink); }
   .dial-fair { --fill: var(--color-faint); color: var(--color-muted); }
   .dial-low { --fill: var(--color-rule-strong); color: var(--color-faint); }
@@ -241,4 +241,4 @@
 .scope-still .scope-sweep { animation: none; opacity: 0; }
 .blip { position: absolute; z-index: 2; width: .55rem; height: .55rem; margin: -.275rem 0 0 -.275rem; border-radius: 999px; background: var(--color-brand); animation: blip-in .5s ease-out both; }
 .blip-faint { background: var(--color-faint); width: .35rem; height: .35rem; margin: -.175rem 0 0 -.175rem; }
-.blip-strong { background: var(--color-signal); width: .7rem; height: .7rem; margin: -.35rem 0 0 -.35rem; }
+.blip-strong { background: var(--color-good); width: .7rem; height: .7rem; margin: -.35rem 0 0 -.35rem; }

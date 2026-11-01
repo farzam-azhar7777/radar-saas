@@ -7,22 +7,12 @@ module ApplicationHelper
       cap: Radar.daily_generation_cap }
   end
 
-  # Fit, on a scale Farzam reads dozens of times a day. Only the top band gets
-  # the signal colour, so it keeps meaning something.
-  def score_tone(score)
-    case score.to_i
-    when 85..100 then %w[text-signal border-signal]
-    when 75..84  then %w[text-ink border-ink]
-    when 65..74  then %w[text-muted border-rule]
-    else %w[text-faint border-rule]
-    end
-  end
+  # The fit ring. Green only for a strong match, the same jobs the "Strong" tag marks.
+  def dial_class(score, strong: score.to_i >= 85)
+    return "dial-strong" if strong
 
-  # The fit ring. Only the top band is coral, so it keeps meaning something.
-  def dial_class(score)
     case score.to_i
-    when 85..100 then "dial-strong"
-    when 70..84 then "dial-good"
+    when 70..100 then "dial-good"
     when 55..69 then "dial-fair"
     else "dial-low"
     end

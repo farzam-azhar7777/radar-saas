@@ -4,7 +4,7 @@
 <%= link_to root_path, class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> Inbox<% end %>
 
 <div class="mt-3 flex flex-wrap items-start gap-5">
-  <span class="dial dial-lg <%= dial_class(@posting.score) %>" style="--pct: <%= @posting.score.to_i %>" title="Fit <%= @posting.score %> of 100"><span><%= @posting.score %></span></span>
+  <span class="dial dial-lg <%= dial_class(@posting.score, strong: @posting.hot?) %>" style="--pct: <%= @posting.score.to_i %>" title="Fit <%= @posting.score %> of 100"><span><%= @posting.score %></span></span>
   <%# A floor on the title's width, so on a phone the actions wrap below it
       instead of squeezing it to one word a line. %>
   <div class="min-w-[min(100%,15rem)] flex-1">

@@ -28,7 +28,7 @@
         <div><dt class="hint">Not yours</dt><dd class="font-display text-2xl font-semibold tnum text-muted"><%= read.count { |r| r.own_commits.to_i.zero? } %></dd></div>
       </dl>
       <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-muted">
-        <li class="flex items-center gap-1.5"><i class="inline-block h-2.5 w-2.5 rounded-full" style="background: var(--color-signal)"></i> 200+ of your commits</li>
+        <li class="flex items-center gap-1.5"><i class="inline-block h-2.5 w-2.5 rounded-full" style="background: var(--color-good)"></i> 200+ of your commits</li>
         <li class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-full bg-brand"></i> Yours</li>
         <li class="flex items-center gap-1.5"><i class="inline-block h-1.5 w-1.5 rounded-full bg-faint"></i> Someone else's</li>
       </ul>

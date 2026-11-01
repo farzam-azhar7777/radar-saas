@@ -24,7 +24,7 @@
         <ul class="panel mt-4 divide-y divide-rule">
           <% @candidates.each do |job| %>
             <li class="flex items-center gap-4 px-4 py-3.5">
-              <span class="dial <%= dial_class(job.score) %>" style="--pct: <%= job.score.to_i %>"><span><%= job.score %></span></span>
+              <span class="dial <%= dial_class(job.score, strong: job.hot?) %>" style="--pct: <%= job.score.to_i %>"><span><%= job.score %></span></span>
               <div class="min-w-0 flex-1">
                 <p class="truncate font-semibold"><%= job.title %></p>
                 <p class="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-muted">
