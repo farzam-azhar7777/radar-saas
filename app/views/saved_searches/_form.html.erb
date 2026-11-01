@@ -16,7 +16,7 @@
     <%= f.label :excluded_keywords_text, "Words that rule a job out", class: "field-label" %>
     <%= f.text_area :excluded_keywords_text, value: search.excluded_keywords_list.join(", "), rows: 2, class: "textarea !min-h-0" %>
   </div>
-  <div class="grid gap-5 sm:grid-cols-3">
+  <div class="grid gap-5 sm:grid-cols-2">
     <div>
       <%= f.label :threshold, "Inbox at", class: "field-label" %>
       <%= f.number_field :threshold, min: 0, max: 100, class: "input tnum" %>
@@ -27,16 +27,6 @@
       <%= f.number_field :hot_threshold, min: 0, max: 100, class: "input tnum" %>
       <p class="field-hint">Interrupts you.</p>
     </div>
-    <div>
-      <%= f.label :min_hourly, "Lowest hourly rate", class: "field-label" %>
-      <%= f.number_field :min_hourly, step: 1, class: "input tnum" %>
-    </div>
-  </div>
-  <div class="border-t border-rule pt-5">
-    <p class="field-label">Limits</p>
-    <p class="field-hint !mt-0 mb-3">A new job outside any limit goes to Passed over: no alert, no proposal. A job with no figure for a stat is kept. Leave a box empty for no limit.</p>
-    <%= render "saved_searches/limits_fields", limits: search.search_limits,
-               name_prefix: "saved_search", id_prefix: [ local_assigns[:namespace], "saved_search" ].compact.join("_") %>
   </div>
   <div>
     <%= f.label :template_name, "Proposal shape", class: "field-label" %>

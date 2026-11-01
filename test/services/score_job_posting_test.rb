@@ -2,7 +2,7 @@ require "test_helper"
 
 class ScoreJobPostingTest < ActiveSupport::TestCase
   def search(**overrides)
-    SavedSearch.new({ name: "t", terms: [ "rails" ], threshold: 70, min_hourly: 25,
+    SavedSearch.new({ name: "t", terms: [ "rails" ], threshold: 70,
                       excluded_keywords: [ "wordpress" ] }.merge(overrides))
   end
 
@@ -120,7 +120,7 @@ end
 class ScoringRegressionTest < ActiveSupport::TestCase
   def rails_search
     SavedSearch.new(name: "Ruby on Rails", terms: [ "ruby on rails", "rails", "ror" ],
-                    threshold: 70, hot_threshold: 70, min_hourly: 25, min_fixed: 500,
+                    threshold: 70, hot_threshold: 70,
                     excluded_keywords: [], excluded_countries: [])
   end
 

@@ -277,9 +277,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080750) do
     t.json "excluded_keywords", default: []
     t.integer "hot_threshold", default: 85, null: false
     t.datetime "last_polled_at"
-    t.json "limits", default: {}, null: false
-    t.decimal "min_fixed", precision: 12, scale: 2
-    t.decimal "min_hourly", precision: 10, scale: 2
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.string "template_name"

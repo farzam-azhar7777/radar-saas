@@ -1,0 +1,20 @@
+<% share = impact[:total].positive? ? impact[:passed_over] * 100 / impact[:total] : 0 %>
+<div class="text-[0.8125rem] leading-snug" aria-live="polite">
+  <% if !limits.any? %>
+    <% if preview %><p class="text-muted">No limits: every match reaches your inbox.</p><% end %>
+  <% elsif impact[:total].zero? %>
+    <p class="text-muted">No matches in the last <%= JobLimits::RECENT_DAYS %> days to measure against.</p>
+  <% else %>
+    <p>
+      <span class="font-display text-[1.05rem] font-semibold tnum <%= 'text-signal' if share >= 25 %>"><%= impact[:passed_over] %></span>
+      <span class="tnum text-muted">of <%= impact[:total] %> matches from the last <%= JobLimits::RECENT_DAYS %> days</span>
+      <span class="text-muted"><%= preview ? "would be passed over" : "would have been passed over" %></span>
+    </p>
+    <% if impact[:by_stat].any? %>
+      <p class="text-faint">Mostly by <%= impact[:by_stat].first(2).map { |noun, n| "#{noun.downcase} (#{n})" }.to_sentence %></p>
+    <% end %>
+    <% if preview && share >= 25 %>
+      <p class="mt-1 font-semibold text-signal">That is <%= share %>% of your matches. Check it is what you want.</p>
+    <% end %>
+  <% end %>
+</div>
