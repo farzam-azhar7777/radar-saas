@@ -14,10 +14,22 @@
     <p class="mt-1 line-clamp-1 text-[0.8125rem] text-muted"><%= posting.description.to_s.squish.truncate(170) %></p>
     <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-muted">
       <span class="font-semibold text-ink"><%= posting.budget_label %></span>
-      <% if posting.client_location %><span><%= posting.client_location %></span><% end %>
-      <% if posting.client_total_spent.to_f.positive? %><span>$<%= number_to_human(posting.client_total_spent.to_i, units: { thousand: "k", million: "m" }, format: "%n%u", precision: 2) %> spent</span><% end %>
+      <% if posting.duration_label.present? %><span><%= posting.duration_label %></span><% end %>
+      <% if posting.engagement.present? %><span><%= posting.engagement %></span><% end %>
+      <% if (questions = posting.screening_questions_list.size).positive? %><span><%= pluralize(questions, "question") %></span><% end %>
       <% if posting.saved_search %><span><%= posting.saved_search.name %></span><% end %>
     </p>
+    <% if !posting.pasted? || posting.client_known? %>
+      <% snap = ClientSnapshot.new(posting) %>
+      <% if (glance = snap.glance).any? %>
+        <% tone = { good: "text-good", warn: "text-warn", bad: "text-signal", neutral: "!font-normal" } %>
+        <p class="client-glance mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-muted" title="<%= snap.verdict.text %>">
+          <% glance.each do |g| %>
+            <span><span class="font-semibold <%= tone[g.tone] %>"><%= g.value %></span><% if g.detail %> <span class="text-faint"><%= g.detail %></span><% end %></span>
+          <% end %>
+        </p>
+      <% end %>
+    <% end %>
   </div>
 
   <%# Bids against age. This pairing is the bid decision. %>
