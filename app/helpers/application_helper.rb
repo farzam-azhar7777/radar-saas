@@ -55,8 +55,8 @@ module ApplicationHelper
     CareerData.instance.index_entries.first&.dig("name").presence || "your strongest project"
   end
 
-  def nav_link(label, path, icon_name, count: nil, match: nil)
-    on = current_page?(path) || (match && request.path.start_with?(match))
+  def nav_link(label, path, icon_name, count: nil, match: nil, on: nil)
+    on = current_page?(path) || (match && request.path.start_with?(match)) if on.nil?
     link_to path, class: "nav-item", "aria-current": (on ? "page" : nil) do
       safe_join([ icon(icon_name), tag.span(label), (tag.span(count, class: "nav-count") if count&.positive?) ].compact)
     end

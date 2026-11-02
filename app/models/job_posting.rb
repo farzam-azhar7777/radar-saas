@@ -19,12 +19,14 @@ class JobPosting < ApplicationRecord
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }
 
-  scope :inbox,        -> { where(status: %w[matched generation_failed]).order(published_at: :desc) }
-  scope :filtered_out, -> { where(status: "ignored").order(score: :desc) }
+  scope :from_upwork,  -> { where(source: "upwork") }
+  scope :pasted,       -> { where(source: "pasted").order(created_at: :desc) }
+  scope :inbox,        -> { from_upwork.where(status: %w[matched generation_failed]).order(published_at: :desc) }
+  scope :filtered_out, -> { from_upwork.where(status: "ignored").order(score: :desc) }
   scope :applied,      -> { where(status: "applied").order(applied_at: :desc) }
   scope :dismissed,    -> { where(status: "dismissed").order(published_at: :desc) }
   scope :fresh, -> { where("COALESCE(job_postings.published_at, job_postings.created_at) >= ?", Radar.alert_max_age_hours.hours.ago) }
-  scope :awaiting_digest, -> { where(status: "matched", notified_at: nil).fresh }
+  scope :awaiting_digest, -> { from_upwork.where(status: "matched", notified_at: nil).fresh }
 
   # Free-text filter across everything a person would recognise a job by.
   scope :matching, ->(term) {
@@ -48,6 +50,14 @@ class JobPosting < ApplicationRecord
 
   scope :sorted_by, ->(key) { left_joins(:saved_search).order(SORTS.fetch(key.to_s, SORTS["newest"]).last) }
 
+  PASTED_ID_PREFIX = "pasted-".freeze
+
+  def pasted? = source == "pasted"
+
+  def on_upwork? = !upwork_id.to_s.start_with?(PASTED_ID_PREFIX)
+
+  def client_known? = client_country.present? || client_total_posted_jobs.present? || client_total_spent.present?
+
   def latest_proposal
     proposals.first
   end
@@ -59,7 +69,7 @@ class JobPosting < ApplicationRecord
   # Competition pressure: applicants per hour since posting. The single most
   # decision-relevant number when bidding, and the thing the inbox leads with.
   def applicants_per_hour
-    return nil if total_applicants.blank? || published_at.blank?
+    return nil if total_applicants.blank? || published_at.blank? || pasted?
 
     hours = [ (Time.current - published_at) / 3600.0, 0.25 ].max
     (total_applicants / hours).round(1)

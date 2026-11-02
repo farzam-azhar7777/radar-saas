@@ -1,0 +1,26 @@
+<% content_for :title, "Pasted jobs - Radar" %>
+<%= turbo_stream_from "inbox" %>
+
+<div class="flex flex-wrap items-end gap-4">
+  <div class="min-w-0 flex-1">
+    <h1 class="title">Pasted jobs</h1>
+    <p class="lede mt-1">Jobs Radar did not bring in on its own. Paste the post and Radar writes the proposal exactly as it does for the inbox: same voice, same checks, same rewrite tools.</p>
+  </div>
+  <%= link_to new_pasted_job_path, class: "btn btn-primary" do %><%= icon(:plus) %> Paste a job<% end %>
+</div>
+
+<% if @postings.empty? %>
+  <div class="panel mt-6 px-8 py-16 text-center">
+    <div class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sunk text-muted"><%= icon(:doc, css: "h-5 w-5") %></div>
+    <p class="heading mt-4">Nothing pasted yet</p>
+    <p class="hint mx-auto mt-1 max-w-md">Found a job on Upwork that is not in your inbox? Paste its description, and its questions if it has any.</p>
+    <%= link_to new_pasted_job_path, class: "btn btn-primary mt-5" do %><%= icon(:plus) %> Paste a job<% end %>
+  </div>
+<% else %>
+  <div class="panel mt-6 overflow-hidden" data-controller="keynav" data-keynav-selected-class="bg-surface">
+    <div class="hidden grid-cols-[3.5rem_1fr_12rem_8rem] gap-5 border-b border-rule px-5 py-2.5 text-[0.75rem] font-semibold text-faint md:grid">
+      <span>Fit</span><span>Job</span><span>Competition</span><span class="text-right">Proposal</span>
+    </div>
+    <% @postings.each { |posting| %><%= render "job_postings/row", posting: posting %><% } %>
+  </div>
+<% end %>
