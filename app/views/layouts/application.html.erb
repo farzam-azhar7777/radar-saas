@@ -20,9 +20,11 @@
         </div>
 
         <nav class="-mx-1 mt-3 flex gap-1 overflow-x-auto pb-1 lg:mx-0 lg:mt-6 lg:block lg:space-y-0.5 lg:overflow-visible lg:pb-0" aria-label="Main">
-          <%= nav_link "Inbox", root_path, :inbox, count: JobPosting.inbox.count, match: "/jobs" %>
+          <% pasted_page = @posting.is_a?(JobPosting) && @posting.pasted? %>
+          <%= nav_link "Inbox", root_path, :inbox, count: JobPosting.inbox.count, match: "/jobs", on: (false if pasted_page) %>
           <%= nav_link "Passed over", filtered_path, :filter, count: JobPosting.filtered_out.count %>
           <%= nav_link "Applied", applied_path, :send, count: JobPosting.applied.count %>
+          <%= nav_link "Pasted jobs", pasted_jobs_path, :doc, count: JobPosting.pasted.where(status: %w[matched generation_failed]).count, match: "/pasted", on: (true if pasted_page) %>
           <%= nav_link "Searches", saved_searches_path, :search, match: "/searches" %>
           <%= nav_link "What it learned", lessons_path, :spark, count: Lesson.active.count %>
           <%= nav_link "Settings", settings_path, :settings %>

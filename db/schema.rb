@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_080750) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -96,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080750) do
     t.json "score_reasons", default: []
     t.json "screening_questions", default: []
     t.json "skills", default: []
+    t.string "source", default: "upwork", null: false
     t.string "status", default: "new", null: false
     t.string "subcategory"
     t.string "title", null: false
@@ -107,6 +108,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_080750) do
     t.index ["outcome"], name: "index_job_postings_on_outcome"
     t.index ["repost_of_id"], name: "index_job_postings_on_repost_of_id"
     t.index ["saved_search_id"], name: "index_job_postings_on_saved_search_id"
+    t.index ["source"], name: "index_job_postings_on_source"
     t.index ["status", "published_at"], name: "index_job_postings_on_status_and_published_at"
     t.index ["upwork_id"], name: "index_job_postings_on_upwork_id", unique: true
   end

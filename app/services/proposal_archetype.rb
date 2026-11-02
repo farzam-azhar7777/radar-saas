@@ -112,15 +112,27 @@ class ProposalArchetype
 
   def signals
     [
-      "#{bids} #{'proposal'.pluralize(bids)} already submitted",
-      spend.positive? ? "client has spent $#{spend.round}" : "client has no spend history",
-      posting.client_payment_verified? ? "payment verified" : "payment NOT verified",
-      posting.client_total_hires.to_i.positive? ? "#{posting.client_total_hires} previous hires" : "no previous hires",
-      posting.client_rating.to_f.positive? ? "#{posting.client_rating.to_f.round(1)} star rating" : nil,
+      *(bid_signal if bids_known?),
+      *(client_signals if client_known?),
       questions? ? "#{posting.screening_questions_list.size} screening questions" : nil,
       posting.budget_label,
       posting.engagement.presence,
       posting.duration_label.presence
     ].compact
+  end
+
+  def bids_known? = !posting.pasted? || !posting.total_applicants.nil?
+
+  def client_known? = !posting.pasted? || posting.client_known?
+
+  def bid_signal = "#{bids} #{'proposal'.pluralize(bids)} already submitted"
+
+  def client_signals
+    [
+      spend.positive? ? "client has spent $#{spend.round}" : "client has no spend history",
+      posting.client_payment_verified? ? "payment verified" : "payment NOT verified",
+      posting.client_total_hires.to_i.positive? ? "#{posting.client_total_hires} previous hires" : "no previous hires",
+      posting.client_rating.to_f.positive? ? "#{posting.client_rating.to_f.round(1)} star rating" : nil
+    ]
   end
 end

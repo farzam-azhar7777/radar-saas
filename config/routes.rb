@@ -23,6 +23,7 @@ Rails.application.routes.draw do
     member { post :rewrite }
   end
 
+  resources :pasted_jobs, path: "pasted", only: %i[index new create]
   resource :job_limits, path: "searches/limits", only: :update do
     get :preview
   end

@@ -1,7 +1,7 @@
 <% content_for :title, "#{@posting.title.truncate(60)} - Radar" %>
 <%= turbo_stream_from "job_posting_#{@posting.id}" %>
 
-<%= link_to root_path, class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> Inbox<% end %>
+<%= link_to (@posting.pasted? ? pasted_jobs_path : root_path), class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> <%= @posting.pasted? ? "Pasted jobs" : "Inbox" %><% end %>
 
 <div class="mt-3 flex flex-wrap items-start gap-5">
   <span class="dial dial-lg <%= dial_class(@posting.score, strong: @posting.hot?) %>" style="--pct: <%= @posting.score.to_i %>" title="Fit <%= @posting.score %> of 100"><span><%= @posting.score %></span></span>
@@ -14,13 +14,15 @@
       <% if @posting.engagement.present? %><span><%= @posting.engagement %></span><% end %>
       <% if @posting.duration_label.present? %><span><%= @posting.duration_label %></span><% end %>
       <% if @posting.saved_search %><span><%= @posting.saved_search.name %></span><% end %>
-      <span>posted <%= @posting.age_label %></span>
+      <span><%= @posting.pasted? ? "pasted" : "posted" %> <%= @posting.age_label %></span>
+      <% if @posting.pasted? %><span class="chip chip-outline">Pasted</span><% end %>
       <% if (count = @posting.screening_questions_list.size).positive? %>
         <a href="#questions" class="font-semibold text-brand hover:underline"><%= pluralize(count, "screening question") %></a>
       <% end %>
     </p>
   </div>
   <div class="flex flex-wrap items-center gap-2">
+    <% unless @posting.pasted? && @posting.total_applicants.nil? %>
     <div class="mr-2 text-right">
       <p class="font-display text-[1.05rem] font-semibold tnum <%= @posting.total_applicants.to_i >= 30 ? 'text-signal' : '' %>"><%= @posting.pressure_label %></p>
       <p class="text-[0.75rem] text-faint">
@@ -30,8 +32,11 @@
         <%= @posting.refreshed_at ? "checked #{time_ago_in_words(@posting.refreshed_at)} ago" : "not re-checked" %>
       </p>
     </div>
+    <% end %>
+    <% if @posting.on_upwork? %>
     <%= button_to refresh_job_posting_path(@posting), class: "btn btn-secondary btn-sm",
           title: "Re-check the live bid count and client stats on Upwork. One API call." do %><%= icon(:refresh) %> Refresh<% end %>
+    <% end %>
     <%= link_to @posting.upwork_url, target: "_blank", rel: "noopener", class: "btn btn-secondary btn-sm" do %>Open on Upwork <%= icon(:external) %><% end %>
     <% unless %w[dismissed applied].include?(@posting.status) %>
       <%= button_to "Not interested", dismiss_job_posting_path(@posting), class: "btn btn-ghost btn-sm",
@@ -49,7 +54,9 @@
   </div>
 <% end %>
 
-<div class="mt-6"><%= render "job_postings/client", posting: @posting %></div>
+<% if !@posting.pasted? || @posting.client_known? %>
+  <div class="mt-6"><%= render "job_postings/client", posting: @posting %></div>
+<% end %>
 
 <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
   <div class="space-y-5">

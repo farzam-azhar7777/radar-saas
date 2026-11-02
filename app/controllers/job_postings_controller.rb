@@ -4,7 +4,7 @@ class JobPostingsController < ApplicationController
   def index
     @sort = params[:sort].presence || "newest"
     @query = params[:q].to_s.strip
-    @postings = JobPosting.where(status: %w[matched generation_failed])
+    @postings = JobPosting.from_upwork.where(status: %w[matched generation_failed])
                           .includes(:saved_search, :proposals)
                           .matching(@query)
                           .sorted_by(@sort)
@@ -15,7 +15,7 @@ class JobPostingsController < ApplicationController
   def filtered
     @sort = params[:sort].presence || "fit"
     @query = params[:q].to_s.strip
-    @postings = JobPosting.where(status: "ignored")
+    @postings = JobPosting.from_upwork.where(status: "ignored")
                           .includes(:saved_search)
                           .matching(@query)
                           .sorted_by(@sort)
@@ -89,7 +89,7 @@ class JobPostingsController < ApplicationController
 
   def dismiss
     @posting.update!(status: "dismissed")
-    redirect_to root_path, notice: "Dismissed."
+    redirect_to (@posting.pasted? ? pasted_jobs_path : root_path), notice: "Dismissed."
   end
 
   # From the Filtered out tab: "this was actually a match".

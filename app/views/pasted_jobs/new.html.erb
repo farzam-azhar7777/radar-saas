@@ -1,0 +1,64 @@
+<% content_for :title, "Paste a job - Radar" %>
+
+<%= link_to pasted_jobs_path, class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> Pasted jobs<% end %>
+<h1 class="title mt-3">Paste a job</h1>
+<p class="lede mt-1">Only the post is needed. Everything else makes the proposal fit better.</p>
+
+<%= form_with model: @pasted, url: pasted_jobs_path, scope: :pasted_job, class: "mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start" do |f| %>
+  <div class="panel panel-pad space-y-5">
+    <% if @pasted.errors.any? %>
+      <div class="notice notice-signal"><%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %><div><%= @pasted.errors.full_messages.to_sentence %>.</div></div>
+    <% end %>
+    <div>
+      <%= f.label :post, "The job post", class: "field-label" %>
+      <%= f.text_area :post, rows: 14, required: true, autofocus: true, class: "textarea",
+            placeholder: "Paste the whole post: what they are building, requirements, stack, anything they ask you to include." %>
+      <p class="field-hint">Questions asked inside the description are answered in the letter, as for any job.</p>
+    </div>
+    <div>
+      <%= f.label :questions, "Screening questions", class: "field-label" %>
+      <%= f.text_area :questions, rows: 4, class: "textarea !min-h-0",
+            placeholder: "Describe a recent project similar to this one.\nWhat is your availability?" %>
+      <p class="field-hint">The questions Upwork shows with their own answer boxes, one per line. Each gets its own answer.</p>
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <div class="panel panel-pad space-y-5">
+      <div>
+        <%= f.label :title, "Title", class: "field-label" %>
+        <%= f.text_field :title, class: "input", placeholder: "Left empty, the post's first line is used" %>
+      </div>
+      <div>
+        <%= f.label :link, "Upwork link", class: "field-label" %>
+        <%= f.url_field :link, class: "input", placeholder: "https://www.upwork.com/jobs/~02…" %>
+        <p class="field-hint">Optional. Radar then reads the client's hiring record, and if it already has this job it opens that one instead of adding a copy.</p>
+      </div>
+      <div data-controller="budget">
+        <%= f.label :budget, "Budget", class: "field-label" %>
+        <div class="mt-1 flex gap-2">
+          <%= f.select :budget, PastedJob::BUDGETS.map { |value, label| [ label, value ] }, {}, class: "select !mt-0 min-w-0 flex-1",
+                data: { budget_target: "kind", action: "budget#update" } %>
+          <%= f.number_field :budget_min, min: 0, step: 1, class: "input tnum !mt-0 !w-24 flex-none", data: { budget_target: "min" }, "aria-label": "Budget from" %>
+          <%= f.number_field :budget_max, min: 0, step: 1, class: "input tnum !mt-0 !w-24 flex-none", data: { budget_target: "max" }, "aria-label": "Budget to" %>
+        </div>
+      </div>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= f.label :bids, "Bids so far", class: "field-label" %>
+          <%= f.number_field :bids, min: 0, step: 1, class: "input tnum", placeholder: "e.g. 12" %>
+          <p class="field-hint">From the post's Activity. A crowded job gets a shorter letter.</p>
+        </div>
+        <div>
+          <%= f.label :saved_search_id, "Closest search", class: "field-label" %>
+          <%= f.select :saved_search_id, SavedSearch.ordered.map { |s| [ s.name, s.id ] }, { include_blank: "Pick for me" }, class: "select" %>
+          <p class="field-hint">Its proposal shape and your feedback rules apply.</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <%= f.button class: "btn btn-primary btn-lg", data: { turbo_submits_with: "Starting…" } do %><%= icon(:pen) %> Write the proposal<% end %>
+      <%= link_to "Cancel", pasted_jobs_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+<% end %>
