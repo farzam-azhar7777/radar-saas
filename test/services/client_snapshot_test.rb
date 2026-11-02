@@ -62,4 +62,18 @@ class ClientSnapshotTest < ActiveSupport::TestCase
                   client_timezone: "America/Chicago").readings.map(&:label)
     assert_equal [ "Payment", "Spent", "Hire rate", "Rating", "Location", "Hours shared" ], labels
   end
+
+  test "the list row's glance shows the same readings in short form, with the same colours" do
+    glance = snap(client_payment_verified: true, client_total_spent: 48_000, client_total_hires: 12, client_total_posted_jobs: 15,
+                  client_jobs_with_hires: 6, client_rating: 3.8, client_country: "United States").glance
+    assert_equal [ [ "Verified", nil, :good ], [ "$48k spent", "12 hires", :good ], [ "40% hire rate", "of 15 jobs", :warn ],
+                   [ "3.8 rating", nil, :warn ], [ "United States", nil, :neutral ] ],
+                 glance.map { |g| [ g.value, g.detail, g.tone ] }
+  end
+
+  test "the glance leaves out what Radar does not know, and keeps a hidden spend hidden" do
+    assert_empty snap.glance
+    assert_equal [ [ "Payment not verified", :bad ], [ "Spend hidden", :neutral ] ],
+                 snap(client_payment_verified: false, client_financial_privacy: true, client_total_spent: 5_000).glance.map { |g| [ g.value, g.tone ] }
+  end
 end

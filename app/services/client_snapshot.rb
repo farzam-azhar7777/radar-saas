@@ -89,6 +89,23 @@ class ClientSnapshot
     list
   end
 
+  def glance
+    list = []
+    list << Reading.new(value: "Verified", tone: :good) if @p.client_payment_verified == true
+    list << Reading.new(value: "Payment not verified", tone: :bad) if unverified?
+    if privacy?
+      list << Reading.new(value: "Spend hidden", tone: :neutral)
+    elsif !@p.client_total_spent.nil?
+      list << Reading.new(value: "#{short_money(spent)} spent", detail: (hires.positive? ? pluralize(hires, "hire") : nil),
+                          tone: spent >= 10_000 ? :good : (spent.zero? ? :warn : :neutral))
+    end
+    list << Reading.new(value: "#{hire_rate}% hire rate", detail: "of #{pluralize(posted, 'job')}", tone: hire_rate >= 50 ? :good : :warn) if hire_rate
+    list << Reading.new(value: "#{format('%.1f', rating)} rating", tone: rating >= 4.5 ? :good : (rating < 4.0 ? :warn : :neutral)) if rating.positive?
+    list << Reading.new(value: "#{overlap} of #{WORKDAY_HOURS} hrs shared", tone: overlap >= 4 ? :good : :warn) unless overlap.nil?
+    list << Reading.new(value: @p.client_location, tone: :neutral) if @p.client_location
+    list
+  end
+
   def last_hired_for = @p.client_last_contract_title.presence
 
   def timezone = @p.client_timezone.presence
@@ -124,6 +141,8 @@ class ClientSnapshot
 
     :neutral
   end
+
+  def short_money(n) = "$#{ActiveSupport::NumberHelper.number_to_human(n.to_i, units: { thousand: 'k', million: 'm' }, format: '%n%u', precision: 2)}"
 
   def delimit(n) = ActiveSupport::NumberHelper.number_to_delimited(n.to_i)
 
