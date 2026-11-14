@@ -24,7 +24,7 @@ class ConversationTest < ActionDispatch::IntegrationTest
   test "the drafted reply lands in the thread, keeps the session, and can be edited and copied" do
     @posting.messages.create!(role: "client", body: "Can you start Tuesday?")
     original = ConversationReply.method(:call)
-    ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "Yes.", session_id: "s-1", meta: { "session_id" => "s-1" }) }
+    ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "Yes.", role: "me", session_id: "s-1", meta: { "session_id" => "s-1" }) }
     DraftReplyJob.perform_now(@posting)
     ConversationReply.define_singleton_method(:call, original)
 
@@ -72,5 +72,56 @@ class ConversationTest < ActionDispatch::IntegrationTest
     @posting.proposals.delete_all
     get job_posting_path(@posting)
     assert_select "#conversation", 0
+  end
+
+  test "a pasted Upwork conversation becomes separate messages, and the client's last one gets a reply" do
+    Profile.current.update!(full_name: "Sohair Ahmad")
+    assert_enqueued_with(job: DraftReplyJob) do
+      post job_posting_messages_path(@posting), params: { message: { body: file_fixture("upwork_conversation.txt").read, note: "keep it short" } }
+    end
+    assert_equal %w[client me client], @posting.messages.reload.map(&:role)
+    assert_equal "keep it short", @posting.messages.last.note
+    assert_equal "Added 3 messages. Writing your reply.", flash[:notice]
+  end
+
+  test "pasting the conversation again adds only what is new" do
+    Profile.current.update!(full_name: "Sohair Ahmad")
+    @posting.messages.create!(role: "client", body: "Thanks Sohair, no")
+    @posting.update!(conversation_session_id: "s-1")
+
+    post job_posting_messages_path(@posting), params: { message: { body: "Shai Gecelter\n1:09 AM\nThanks Sohair, no\n\nSohair Ahmad\n1:20 AM\nHere are my answers." } }
+    assert_equal [ "Thanks Sohair, no", "Here are my answers." ], @posting.messages.reload.map(&:body)
+    assert_match "The last one is yours, so there is nothing to reply to yet", flash[:notice]
+    assert_not @posting.replying?
+
+    post job_posting_messages_path(@posting), params: { message: { body: "Sohair Ahmad\n1:20 AM\nHere are my answers." } }
+    assert_match "Nothing new", flash[:notice]
+  end
+
+  test "while a reply is written the panel shows the same live loader as a proposal" do
+    @posting.messages.create!(role: "client", body: "Hi")
+    @posting.update!(reply_queued_at: Time.current)
+    get job_posting_path(@posting)
+    assert_select "#conversation [data-controller=generation][data-generation-pane-value='#conversation']" do
+      assert_select "[data-generation-target=bar]"
+      assert_select "[data-generation-target=elapsed]"
+    end
+  end
+
+  test "Ask Radar adds a private question and gets it answered in the same thread" do
+    @posting.messages.create!(role: "client", body: "Pick one area.")
+    assert_enqueued_with(job: DraftReplyJob) do
+      post job_posting_messages_path(@posting), params: { message: { role: "ask", body: "Which area suits me best?" } }
+    end
+    assert_equal "ask", @posting.messages.last.role
+
+    original = ConversationReply.method(:call)
+    ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "The restaurant one.", role: "radar", session_id: "s-1", meta: { "session_id" => "s-1" }) }
+    DraftReplyJob.perform_now(@posting)
+    ConversationReply.define_singleton_method(:call, original)
+
+    get job_posting_path(@posting)
+    assert_select "##{ActionView::RecordIdentifier.dom_id(@posting.messages.last)}", text: /Radar.*only you see this.*The restaurant one\./m
+    assert_select "#conversation input[type=radio][name='message[role]'][value=ask]"
   end
 end

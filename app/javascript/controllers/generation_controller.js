@@ -13,7 +13,9 @@ export default class extends Controller {
     startedAt: Number,
     typical: { type: Number, default: 160 },
     timeout: { type: Number, default: 900 },
-    url: String
+    url: String,
+    pane: { type: String, default: "#proposal-pane" },
+    notes: { type: Array, default: [] }
   }
 
   connect() {
@@ -52,6 +54,13 @@ export default class extends Controller {
 
   note(s) {
     const typical = this.typicalValue
+    const [reading, drafting, long, late, past] = this.notesValue
+    if (reading) {
+      if (s < 15) return reading
+      if (s < typical) return drafting
+      if (s < typical * 2.5) return long
+      return s < this.timeoutValue ? late : past
+    }
     if (s < 20) return "Reading the post, your projects and the writing rules."
     if (s < typical) return "Drafting, then checking it against the proposal spec."
     if (s < typical * 2.5) return "Longer than usual. A failed check triggers one rewrite, which roughly doubles the time."
@@ -73,8 +82,8 @@ export default class extends Controller {
 
       const fresh = new DOMParser()
         .parseFromString(await response.text(), "text/html")
-        .querySelector("#proposal-pane")
-      const pane = document.querySelector("#proposal-pane")
+        .querySelector(this.paneValue)
+      const pane = document.querySelector(this.paneValue)
       if (!fresh || !pane) return
       if (fresh.querySelector("[data-controller~='generation']")) return
 

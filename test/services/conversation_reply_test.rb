@@ -7,14 +7,14 @@ class ConversationReplyTest < ActiveSupport::TestCase
     @posting.proposals.create!(version: 1, body: "I built Sera, a Twilio voice agent on Rails.")
   end
 
-  def claude(fail_resume: false)
+  def claude(fail_resume: false, text: "```\nHappy to — Tuesday works.\n```")
     calls = []
     original = ClaudeRun.method(:call)
     ClaudeRun.define_singleton_method(:call) do |prompt, **opts|
       calls << { prompt: prompt, opts: opts }
       raise ClaudeRun::Error, "No conversation found" if fail_resume && opts[:resume]
 
-      ClaudeRun::Result.new(text: "```\nHappy to — Tuesday works.\n```", duration_ms: 5, meta: { "session_id" => "s-#{calls.size}" })
+      ClaudeRun::Result.new(text: text, duration_ms: 5, meta: { "session_id" => "s-#{calls.size}" })
     end
     yield calls
   ensure
@@ -54,7 +54,7 @@ class ConversationReplyTest < ActiveSupport::TestCase
   test "a lost session is rebuilt from the saved conversation" do
     @posting.update!(conversation_session_id: "gone")
     @posting.messages.create!(role: "client", body: "Can you start Tuesday?")
-    @posting.messages.create!(role: "me", body: "Yes, Tuesday.")
+    @posting.messages.create!(role: "me", body: "Yes, Tuesday.", claude_meta: { "session_id" => "gone" })
     @posting.messages.create!(role: "client", body: "What would it cost?")
 
     claude(fail_resume: true) do |calls|
@@ -82,6 +82,46 @@ class ConversationReplyTest < ActiveSupport::TestCase
       assert_match(/Always mention \w+'s timezone\./, calls.sole[:prompt])
       assert_match "Client wrote >> Can you start Tuesday? <<", calls.sole[:prompt]
       assert_no_match "HOW TO REPLY", calls.sole[:prompt]
+    end
+  end
+
+  test "asking Radar privately gets a private answer, or a draft for the client when that is what was asked" do
+    @posting.update!(conversation_session_id: "s-old")
+    @posting.messages.create!(role: "client", body: "Pick one area and tell me your first week.")
+    @posting.messages.create!(role: "me", body: "I will get back to you.", claude_meta: { "session_id" => "s-old" })
+    @posting.messages.create!(role: "ask", body: "Which area suits me best?")
+
+    claude(text: "The restaurant platform. You built Sera.") do |calls|
+      result = ConversationReply.call(@posting)
+      assert_equal [ "radar", "The restaurant platform. You built Sera." ], [ result.role, result.body ]
+      assert_match(/ASKS YOU PRIVATELY\nWhich area suits me best\?/, calls.sole[:prompt])
+      assert_match "the client never sees this", calls.sole[:prompt]
+    end
+
+    claude(text: "```\nHi Shai, here is my first week.\n```") do
+      assert_equal [ "me", "Hi Shai, here is my first week." ], ConversationReply.call(@posting).to_h.values_at(:role, :body)
+    end
+  end
+
+  test "messages you sent yourself since the last draft reach a resumed session in order" do
+    @posting.update!(conversation_session_id: "s-old")
+    @posting.messages.create!(role: "client", body: "Hi", claude_meta: {})
+    @posting.messages.create!(role: "me", body: "Drafted", claude_meta: { "session_id" => "s-old" })
+    @posting.messages.create!(role: "me", body: "I also sent this myself.")
+    @posting.messages.create!(role: "client", body: "Great, what next?")
+
+    claude do |calls|
+      ConversationReply.call(@posting)
+      assert_match(/SENT THE CLIENT\nI also sent this myself\..*Great, what next\?/m, calls.sole[:prompt])
+    end
+  end
+
+  test "nothing is asked of Claude when the last message is your own" do
+    @posting.messages.create!(role: "client", body: "Hi")
+    @posting.messages.create!(role: "me", body: "Hello")
+    claude do |calls|
+      assert_raises(ConversationReply::Error) { ConversationReply.call(@posting) }
+      assert_empty calls
     end
   end
 end

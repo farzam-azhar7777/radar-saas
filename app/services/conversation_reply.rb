@@ -3,7 +3,7 @@ class ConversationReply
 
   class Error < StandardError; end
 
-  Result = Struct.new(:body, :session_id, :meta, keyword_init: true)
+  Result = Struct.new(:body, :role, :session_id, :meta, keyword_init: true)
 
   def self.call(...) = new(...).call
 
@@ -13,24 +13,27 @@ class ConversationReply
   end
 
   def call
-    raise Error, "there is no client message to reply to" if waiting.empty?
+    raise Error, "there is nothing new to answer" unless waiting.last&.awaits_radar?
 
     run = resumed || ClaudeRun.call(opening + turn, timeout: TIMEOUT, model: Radar.writer_model, label: "conversation reply")
     body = ProposalAutofix.plain_dashes(ClaudeRun.fenced(run.text))
     raise Error, "Claude came back with an empty reply" if body.blank?
 
-    Result.new(body: body, session_id: run.meta["session_id"], meta: run.meta)
+    role = asked? && !run.text.include?("```") ? "radar" : "me"
+    Result.new(body: body, role: role, session_id: run.meta["session_id"], meta: run.meta)
   end
 
   private
 
   def first_name = Profile.first_name
 
-  def last_reply_index = @messages.rindex { |m| !m.client? }
+  def last_seen_index = @messages.rindex(&:drafted?)
 
-  def history = last_reply_index ? @messages[..last_reply_index] : []
+  def history = last_seen_index ? @messages[..last_seen_index] : []
 
   def waiting = @messages.drop(history.size)
+
+  def asked? = waiting.last.role == "ask"
 
   def resumed
     return unless @posting.conversation_session_id
@@ -46,7 +49,8 @@ class ConversationReply
     proposal = @posting.latest_proposal
     lines = []
     lines << "You are #{first_name}, a freelancer. #{first_name} sent the proposal below for this Upwork job, and the client " \
-             "has written back. From here on you write #{first_name}'s messages in this conversation, one at a time."
+             "has written back. From here on you write #{first_name}'s messages in this conversation, one at a time, and " \
+             "answer #{first_name} when they ask you something privately."
     lines << "This folder is #{first_name}'s career folder. Read CLAUDE.md, profile.yml and writing-voice.md before your " \
              "first reply, and read the project files when the client asks about specific experience. State only facts you " \
              "find there, in the proposal or in the conversation."
@@ -73,16 +77,41 @@ class ConversationReply
 
   def sent_note
     last = history.last
-    return "" unless last && !last.client?
+    return "" unless last&.role == "me"
 
     "#{first_name}'s last message, exactly as it was sent (it may differ from your draft):\n#{last.body}\n\n"
   end
 
   def turn
-    notes = waiting.filter_map { |m| m.note.presence }
-    [ "---", ReplyStyle.rules_for(name: first_name), "---",
-      ReplyStyle.turn_for(name: first_name, client_message: waiting.map(&:body).join("\n\n"), note: notes.join(" ")) ].join("\n")
+    context = asked? ? waiting : waiting.reject(&:client?)
+    lines = [ "---", ReplyStyle.rules_for(name: first_name), "---" ]
+    context.each { |m| lines << "#{label(m)}\n#{m.body}" << "" }
+    lines << (asked? ? ask_instruction : client_instruction)
+    lines.join("\n")
   end
 
-  def speaker(message) = message.client? ? "Client" : first_name
+  def client_instruction
+    clients = waiting.select(&:client?)
+    ReplyStyle.turn_for(name: first_name, client_message: clients.map(&:body).join("\n\n"),
+                        note: clients.filter_map { |m| m.note.presence }.join(" "))
+  end
+
+  def ask_instruction
+    "#{first_name} is asking you privately; the client never sees this. If they want a message to send the client, " \
+    "output only that message inside a single fenced block, following the rules above. Otherwise answer #{first_name} " \
+    "directly in plain text, with no fenced block."
+  end
+
+  def label(message)
+    case message.role
+    when "client" then "THE CLIENT WROTE#{" (#{first_name}'s note: #{message.note})" if message.note.present?}"
+    when "me" then "#{first_name.upcase} SENT THE CLIENT"
+    when "ask" then "#{first_name.upcase} ASKS YOU PRIVATELY"
+    end
+  end
+
+  def speaker(message)
+    { "client" => "Client", "me" => first_name, "ask" => "#{first_name}, privately to you",
+      "radar" => "You, privately to #{first_name}" }.fetch(message.role)
+  end
 end
