@@ -20,6 +20,7 @@ Rails.application.routes.draw do
 
   get "filtered", to: "job_postings#filtered", as: :filtered
   get "applied",  to: "job_postings#applied",  as: :applied
+  get "find", to: "job_searches#show", as: :job_search
 
   # One part of a proposal, rewritten on its own.
   resources :proposal_sections, only: [], path: "parts" do

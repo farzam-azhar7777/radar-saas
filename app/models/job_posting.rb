@@ -33,6 +33,8 @@ class JobPosting < ApplicationRecord
   scope :matching, ->(term) {
     next all if term.blank?
 
+    next where(upwork_id: term[PastedJob::UPWORK_LINK, 1]) if term[PastedJob::UPWORK_LINK, 1]
+
     like = "%#{term.to_s.strip.downcase}%"
     where("LOWER(title) LIKE :q OR LOWER(description) LIKE :q OR LOWER(skills) LIKE :q " \
           "OR LOWER(COALESCE(client_country, \'\')) LIKE :q OR LOWER(COALESCE(category, \'\')) LIKE :q", q: like)
@@ -56,6 +58,18 @@ class JobPosting < ApplicationRecord
   def pasted? = source == "pasted"
 
   def on_upwork? = !upwork_id.to_s.start_with?(PASTED_ID_PREFIX)
+
+  def self.find_for_palette(term, limit: 12)
+    like = "%#{term.to_s.strip.downcase}%"
+    matching(term).order(Arel.sql(sanitize_sql_array([ "LOWER(title) LIKE ? DESC, status = 'applied' DESC", like ])), published_at: :desc)
+                  .limit(limit)
+  end
+
+  def place_label
+    return "Pasted jobs" if pasted? && status != "applied"
+
+    { "applied" => "Applied", "ignored" => "Passed over", "dismissed" => "Not interested" }.fetch(status, "Inbox")
+  end
 
   def client_known? = client_country.present? || client_total_posted_jobs.present? || client_total_spent.present?
 
