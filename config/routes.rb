@@ -13,6 +13,9 @@ Rails.application.routes.draw do
       post :promote
       patch :template
     end
+    resources :messages, only: %i[create update destroy] do
+      post :redraft, on: :collection
+    end
   end
 
   get "filtered", to: "job_postings#filtered", as: :filtered
@@ -50,6 +53,7 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   get "settings", to: "settings#show", as: :settings
+  resource :reply_style, path: "settings/replies", only: %i[edit update destroy]
 
   # The setup wizard. Everything above redirects here until it is finished.
   scope "setup", module: "setup", as: "setup" do

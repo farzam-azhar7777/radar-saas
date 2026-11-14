@@ -10,7 +10,7 @@ export default class extends Controller {
     // An explicit value wins over the visible text. The cover letter is
     // assembled from its parts with the separators Upwork needs, and reading
     // it off the cards would paste the layout instead of the letter.
-    const text = this.hasTextValue && this.textValue ? this.textValue : this.sourceTarget.innerText
+    const text = this.hasTextValue && this.textValue ? this.textValue : (this.sourceTarget.value ?? this.sourceTarget.innerText)
 
     try {
       await navigator.clipboard.writeText(text)

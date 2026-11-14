@@ -1,6 +1,7 @@
 class JobPosting < ApplicationRecord
   belongs_to :saved_search, optional: true
   has_many :proposals, -> { order(version: :desc) }, dependent: :destroy
+  has_many :messages, -> { order(:id) }, dependent: :destroy
   belongs_to :repost_of, class_name: "JobPosting", optional: true
   has_many :reposts, class_name: "JobPosting", foreign_key: :repost_of_id, dependent: :nullify
 
@@ -156,6 +157,15 @@ class JobPosting < ApplicationRecord
 
   def fresh?
     (published_at || created_at || Time.current) >= Radar.alert_max_age_hours.hours.ago
+  end
+
+  REPLY_DEADLINE = 10.minutes
+
+  def replying? = reply_queued_at.present? && reply_queued_at > REPLY_DEADLINE.ago
+
+  def draft_reply!
+    update_columns(reply_queued_at: Time.current, reply_error: nil)
+    DraftReplyJob.perform_later(self)
   end
 
   def queue_generation!(feedback: nil)

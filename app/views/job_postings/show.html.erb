@@ -104,6 +104,9 @@
   </div>
 
   <div class="space-y-5">
+    <% talking = @posting.latest_proposal&.body.present? %>
+    <% talk_first = talking && (@posting.status == "applied" || @posting.messages.any?) %>
+    <% if talk_first %><%= render "messages/conversation", posting: @posting %><% end %>
     <section class="panel panel-pad">
       <div class="flex flex-wrap items-center gap-2">
         <h2 class="heading">How Radar will pitch this</h2>
@@ -123,5 +126,6 @@
     </section>
 
     <div id="proposal-pane"><%= render "job_postings/proposal_pane", posting: @posting %></div>
+    <% if talking && !talk_first %><%= render "messages/conversation", posting: @posting %><% end %>
   </div>
 </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_095004) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -64,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
     t.integer "client_total_reviews"
     t.decimal "client_total_spent", precision: 12, scale: 2
     t.string "contract_type"
+    t.string "conversation_session_id"
     t.boolean "cover_letter_required"
     t.datetime "created_at", null: false
     t.text "description"
@@ -89,6 +90,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
     t.string "rate_proposed"
     t.json "raw_payload", default: {}
     t.datetime "refreshed_at"
+    t.text "reply_error"
+    t.datetime "reply_queued_at"
     t.integer "repost_count", default: 0, null: false
     t.integer "repost_of_id"
     t.integer "saved_search_id"
@@ -205,6 +208,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
     t.index ["saved_search_id"], name: "index_lessons_on_saved_search_id"
   end
 
+  create_table "messages", force: :cascade do |t|
+    t.text "body", null: false
+    t.json "claude_meta", default: {}
+    t.datetime "created_at", null: false
+    t.integer "job_posting_id", null: false
+    t.text "note"
+    t.string "role", null: false
+    t.datetime "updated_at", null: false
+    t.index ["job_posting_id"], name: "index_messages_on_job_posting_id"
+  end
+
   create_table "profiles", force: :cascade do |t|
     t.string "availability"
     t.string "city"
@@ -307,6 +321,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_142252) do
   add_foreign_key "knowledge_repos", "knowledge_projects"
   add_foreign_key "knowledge_repos", "knowledge_scans"
   add_foreign_key "lessons", "saved_searches"
+  add_foreign_key "messages", "job_postings"
   add_foreign_key "proposal_sections", "proposals"
   add_foreign_key "proposals", "job_postings"
 end
