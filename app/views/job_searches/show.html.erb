@@ -1,0 +1,21 @@
+<% if @query.length < 2 %>
+  <p class="px-4 py-6 text-center text-[0.8125rem] text-muted">Type a title, a skill, a country, or paste an Upwork job link.</p>
+<% elsif @postings.empty? %>
+  <p class="px-4 py-6 text-center text-[0.8125rem] text-muted">No job in Radar matches “<%= @query %>”.</p>
+<% else %>
+  <ul role="listbox" aria-label="Jobs" class="py-1.5">
+    <% @postings.each do |posting| %>
+      <li role="option">
+        <%= link_to job_posting_path(posting), data: { command_palette_target: "item", turbo_frame: "_top" },
+              class: "flex items-center gap-3 px-4 py-2.5 outline-none hover:bg-sunk aria-selected:bg-sunk" do %>
+          <span class="dial dial-sm <%= dial_class(posting.score, strong: posting.hot?) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-[0.875rem] font-semibold"><%= posting.title %></span>
+            <span class="block truncate text-[0.75rem] text-muted"><%= posting.budget_label %> · <%= posting.pasted? ? "pasted" : "posted" %> <%= posting.age_label %><%= " · applied #{posting.applied_at.strftime('%-d %b')}" if posting.applied_at %></span>
+          </span>
+          <span class="chip chip-outline flex-none"><%= posting.place_label %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
