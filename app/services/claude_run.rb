@@ -36,8 +36,9 @@ class ClaudeRun
   # default; one of the person's repos when a project is being written up.
   # add_dirs lets the model read beyond chdir, still read-only: a project
   # spread over three repositories is written up from all three.
-  def initialize(prompt, timeout:, model: nil, label: nil, chdir: nil, add_dirs: [])
+  def initialize(prompt, timeout:, model: nil, label: nil, chdir: nil, add_dirs: [], resume: nil)
     @prompt = prompt
+    @resume = resume.presence
     @timeout = timeout
     @model = model.presence
     @label = label
@@ -64,6 +65,7 @@ class ClaudeRun
 
     cmd = [ Radar.claude_bin, "-p", @prompt, "--output-format", "json", "--allowedTools", ALLOWED_TOOLS ]
     cmd += [ "--model", @model ] if @model
+    cmd += [ "--resume", @resume ] if @resume
     @add_dirs.each { |dir| cmd += [ "--add-dir", dir ] }
 
     output = +""

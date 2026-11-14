@@ -1,0 +1,46 @@
+<% content_for :title, "Client replies - Radar" %>
+
+<%= link_to settings_path, class: "inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-muted hover:text-ink" do %><%= icon(:back) %> Settings<% end %>
+<h1 class="title mt-3">Client replies</h1>
+<p class="lede mt-1">How Radar drafts your replies when a client writes back. Both are sent with every reply, so a change applies to conversations already under way.</p>
+
+<%= form_with scope: :reply_style, url: reply_style_path, method: :patch, class: "mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start" do |f| %>
+  <div class="panel panel-pad space-y-5">
+    <% if @errors&.any? %>
+      <div class="notice notice-signal"><%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %><div><%= @errors.to_sentence %>.</div></div>
+    <% end %>
+    <div>
+      <%= f.label :rules, "Rules", class: "field-label" %>
+      <%= f.text_area :rules, value: @rules, rows: 12, class: "textarea font-mono text-[0.8125rem] [field-sizing:content]" %>
+      <p class="field-hint">Length, tone, what to always do and what never to promise.</p>
+    </div>
+    <div>
+      <%= f.label :turn, "Each turn", class: "field-label" %>
+      <%= f.text_area :turn, value: @turn, rows: 7, class: "textarea font-mono text-[0.8125rem] [field-sizing:content]" %>
+      <p class="field-hint">What Claude is told each time you paste a client's message, right after the rules.</p>
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <section class="panel panel-pad">
+      <h2 class="heading">Placeholders</h2>
+      <dl class="mt-3 space-y-2 text-[0.8125rem]">
+        <% ReplyStyle::PLACEHOLDERS.each do |key, meaning| %>
+          <div class="flex gap-3"><dt class="w-36 flex-none font-mono font-semibold"><%= key %></dt><dd class="text-muted"><%= meaning %></dd></div>
+        <% end %>
+      </dl>
+      <p class="hint mt-4">The job, your proposal and the conversation so far are always given to Claude. You don't need to add them.</p>
+    </section>
+    <section class="panel panel-pad">
+      <h2 class="heading"><%= ReplyStyle.own? ? "Your own version" : "Using the example" %></h2>
+      <p class="hint mt-1"><%= ReplyStyle.own? ? "Restore the example any time. Yours is replaced." : "A good place to start. Edit it to make it yours." %></p>
+    </section>
+    <div class="flex flex-wrap items-center gap-3">
+      <%= f.button class: "btn btn-primary" do %><%= icon(:check) %> Save<% end %>
+      <% if ReplyStyle.own? %>
+        <%= link_to "Restore the example", reply_style_path, class: "btn btn-ghost",
+              data: { turbo_method: :delete, turbo_confirm: "Replace your rules and turn with the example?" } %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

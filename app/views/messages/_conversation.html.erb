@@ -1,0 +1,71 @@
+<% messages = posting.messages.to_a %>
+<% replying = posting.replying? %>
+<section id="conversation" class="panel overflow-hidden scroll-mt-6" <%= "data-controller=autorefresh data-autorefresh-every-value=5000" if replying %>>
+  <div class="border-b border-rule px-6 py-4">
+    <h2 class="heading">Conversation with the client</h2>
+    <p class="hint mt-0.5">When the client writes back, paste their message here. Radar drafts your reply in one ongoing thread that remembers the job, your proposal and everything said since. <%= link_to "Change how replies are written", edit_reply_style_path, class: "font-semibold text-brand hover:underline" %></p>
+  </div>
+
+  <% if messages.any? %>
+    <ol class="space-y-4 px-6 py-5">
+      <% messages.each do |m| %>
+        <li id="<%= dom_id(m) %>" class="<%= m.client? ? 'mr-8' : 'ml-8' %>">
+          <div class="flex items-center gap-2 text-[0.75rem] font-semibold text-muted">
+            <span><%= m.client? ? "Client" : "You" %></span>
+            <% if !m.client? && m.drafted? %><span class="font-normal text-faint">drafted by Radar</span><% end %>
+            <span class="font-normal text-faint"><%= time_ago_in_words(m.created_at) %> ago</span>
+            <%= button_to icon(:x, css: "h-3.5 w-3.5"), job_posting_message_path(posting, m), method: :delete,
+                  class: "ml-auto rounded p-0.5 text-faint hover:text-signal", form: { class: "ml-auto" },
+                  title: "Remove this message", "aria-label": "Remove this message",
+                  data: { turbo_confirm: "Remove this message from the conversation?" } %>
+          </div>
+          <% if m.client? %>
+            <div class="mt-1 whitespace-pre-wrap rounded-lg bg-sunk px-4 py-3 text-[0.875rem] leading-relaxed"><%= m.body %></div>
+            <% if m.note.present? %><p class="mt-1 text-[0.75rem] text-muted">Your note: <%= m.note %></p><% end %>
+          <% else %>
+            <%= form_with model: m, url: job_posting_message_path(posting, m), method: :patch, class: "mt-1", data: { controller: "clipboard" } do |f| %>
+              <%= f.text_area :body, rows: 4, class: "textarea !mt-0 text-[0.875rem] leading-relaxed [field-sizing:content]",
+                    data: { clipboard_target: "source" }, "aria-label": "Your reply" %>
+              <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="clipboard#copy" data-clipboard-target="button"><%= icon(:copy) %> <span>Copy</span></button>
+                <%= f.button class: "btn btn-ghost btn-sm" do %><%= icon(:check) %> Save my edits<% end %>
+                <span class="text-[0.75rem] text-faint">Edit it to match what you sent, so the next reply builds on that.</span>
+              </div>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+
+  <% if replying %>
+    <div class="flex items-center gap-3 border-t border-rule bg-surface px-6 py-4">
+      <span class="ping"></span>
+      <p class="font-semibold">Writing your reply</p>
+      <span class="ml-auto text-[0.8125rem] text-muted">Usually under a minute. This updates itself.</span>
+    </div>
+  <% elsif posting.reply_error.present? %>
+    <div class="notice notice-signal mx-6 mb-5">
+      <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
+      <div class="flex-1">The reply could not be written: <%= posting.reply_error %>
+        <% if messages.last&.client? %>
+          <%= button_to "Try again", redraft_job_posting_messages_path(posting), class: "btn btn-secondary btn-sm mt-2" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= form_with model: Message.new, url: job_posting_messages_path(posting), class: "space-y-3 border-t border-rule px-6 py-5" do |f| %>
+    <div>
+      <%= f.label :body, messages.any? ? "The client's new message" : "The client's message", class: "field-label" %>
+      <%= f.text_area :body, rows: 5, required: true, class: "textarea", disabled: replying,
+            placeholder: "Paste exactly what the client wrote." %>
+    </div>
+    <div>
+      <%= f.label :note, "Note for this reply", class: "field-label" %>
+      <%= f.text_field :note, class: "input", disabled: replying,
+            placeholder: "Optional: push for a call, quote $45/hr, available from Monday…" %>
+    </div>
+    <%= f.button class: "btn btn-primary", disabled: replying, data: { turbo_submits_with: "Starting…" } do %><%= icon(:pen) %> Draft my reply<% end %>
+  <% end %>
+</section>
