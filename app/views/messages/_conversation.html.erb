@@ -1,6 +1,6 @@
 <% messages = posting.messages.to_a %>
 <% replying = posting.replying? %>
-<section id="conversation" class="panel overflow-hidden scroll-mt-6" <%= "data-controller=autorefresh data-autorefresh-every-value=5000" if replying %>>
+<section id="conversation" class="panel overflow-hidden scroll-mt-6">
   <div class="border-b border-rule px-6 py-4">
     <h2 class="heading">Conversation with the client</h2>
     <p class="hint mt-0.5">When the client writes back, paste their message here. Radar drafts your reply in one ongoing thread that remembers the job, your proposal and everything said since. <%= link_to "Change how replies are written", edit_reply_style_path, class: "font-semibold text-brand hover:underline" %></p>
@@ -39,10 +39,26 @@
   <% end %>
 
   <% if replying %>
-    <div class="flex items-center gap-3 border-t border-rule bg-surface px-6 py-4">
-      <span class="ping"></span>
-      <p class="font-semibold">Writing your reply</p>
-      <span class="ml-auto text-[0.8125rem] text-muted">Usually under a minute. This updates itself.</span>
+    <% notes = [ "Reading the conversation and your proposal.", "Drafting your reply.",
+                 "Taking longer than usual. Claude may be reading your project files to answer a question.",
+                 "Well past the usual time. It stops itself at the timeout.",
+                 "Past the timeout. Press Try again when it clears." ] %>
+    <div class="border-t border-rule bg-surface px-6 py-5"
+         data-controller="generation"
+         data-generation-started-at-value="<%= (posting.reply_queued_at.to_f * 1000).round %>"
+         data-generation-typical-value="<%= Message.typical_reply_seconds %>"
+         data-generation-timeout-value="<%= JobPosting::REPLY_DEADLINE.to_i %>"
+         data-generation-url-value="<%= job_posting_path(posting) %>"
+         data-generation-pane-value="#conversation"
+         data-generation-notes-value="<%= notes.to_json %>">
+      <div class="flex items-center gap-3">
+        <span class="ping"></span>
+        <p class="font-semibold">Writing your reply</p>
+        <span class="ml-auto text-[0.8125rem] tnum text-muted" data-generation-target="elapsed"></span>
+      </div>
+      <div class="meter mt-3"><i style="width: 2%; background: var(--color-brand)" data-generation-target="bar"></i></div>
+      <p class="hint mt-2.5" data-generation-target="note"><%= notes.first %></p>
+      <p class="mt-1 text-[0.75rem] text-faint">Usually about <%= Message.typical_reply_seconds %> seconds. This updates itself, and keeps checking even if the live connection drops.</p>
     </div>
   <% elsif posting.reply_error.present? %>
     <div class="notice notice-signal mx-6 mb-5">
@@ -59,7 +75,8 @@
     <div>
       <%= f.label :body, messages.any? ? "The client's new message" : "The client's message", class: "field-label" %>
       <%= f.text_area :body, rows: 5, required: true, class: "textarea", disabled: replying,
-            placeholder: "Paste exactly what the client wrote." %>
+            placeholder: "Paste what the client wrote, or copy the whole conversation from Upwork and paste it here." %>
+      <p class="field-hint">A conversation copied from Upwork is split into your messages and the client's. Paste it again later and only the new messages are added.</p>
     </div>
     <div>
       <%= f.label :note, "Note for this reply", class: "field-label" %>
