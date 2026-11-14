@@ -1,5 +1,5 @@
 class Message < ApplicationRecord
-  ROLES = %w[client me].freeze
+  ROLES = %w[client me ask radar].freeze
 
   belongs_to :job_posting
 
@@ -12,5 +12,6 @@ class Message < ApplicationRecord
   end
 
   def client? = role == "client"
+  def awaits_radar? = role.in?(%w[client ask])
   def drafted? = claude_meta.present?
 end

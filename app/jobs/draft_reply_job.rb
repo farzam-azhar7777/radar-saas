@@ -11,7 +11,7 @@ class DraftReplyJob < ApplicationJob
 
   def perform(posting)
     reply = ConversationReply.call(posting)
-    posting.messages.create!(role: "me", body: reply.body, claude_meta: reply.meta)
+    posting.messages.create!(role: reply.role, body: reply.body, claude_meta: reply.meta)
     posting.update_columns(conversation_session_id: reply.session_id || posting.conversation_session_id, reply_queued_at: nil, reply_error: nil)
   rescue ConversationReply::Error, ClaudeRun::Error => e
     Rails.logger.error("[DraftReplyJob] #{posting.id}: #{e.message}")
