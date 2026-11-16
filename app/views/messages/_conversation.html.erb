@@ -75,17 +75,19 @@
         <span class="ping"></span>
         <p class="font-semibold"><%= asking ? "Radar is answering" : "Writing your reply" %></p>
         <span class="ml-auto text-[0.8125rem] tnum text-muted" data-generation-target="elapsed"></span>
+        <%= button_to "Stop", stop_job_posting_messages_path(posting), class: "btn btn-secondary btn-sm",
+              title: "Stop waiting. Whatever this run writes is thrown away." %>
       </div>
       <div class="meter mt-3"><i style="width: 2%; background: var(--color-brand)" data-generation-target="bar"></i></div>
       <p class="hint mt-2.5" data-generation-target="note"><%= notes.first %></p>
       <p class="mt-1 text-[0.75rem] text-faint">Usually about <%= Message.typical_reply_seconds %> seconds. This updates itself, and keeps checking even if the live connection drops.</p>
     </div>
-  <% elsif posting.reply_error.present? %>
-    <div class="notice notice-signal mx-6 mb-5">
+  <% elsif posting.reply_error.present? || messages.last&.awaits_radar? %>
+    <div class="notice <%= posting.reply_error.present? ? 'notice-signal' : 'notice-warn' %> mx-6 mb-5">
       <%= icon(:alert, css: "mt-0.5 h-4 w-4 flex-none") %>
-      <div class="flex-1">Radar could not answer: <%= posting.reply_error %>
+      <div class="flex-1"><%= posting.reply_error.presence || "Radar hasn't answered your last message." %>
         <% if messages.last&.awaits_radar? %>
-          <%= button_to "Try again", redraft_job_posting_messages_path(posting), class: "btn btn-secondary btn-sm mt-2" %>
+          <%= button_to (posting.reply_error.present? ? "Try again" : "Answer now"), redraft_job_posting_messages_path(posting), class: "btn btn-secondary btn-sm mt-2" %>
         <% end %>
       </div>
     </div>

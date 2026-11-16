@@ -3,14 +3,19 @@ module ReplyStyle
   TURN = "reply_turn".freeze
 
   EXAMPLE_RULES = <<~TXT.strip.freeze
-    HOW TO REPLY
-    - This is an Upwork chat message, not another proposal. Short and direct, usually 40 to 150 words.
-    - Answer every question the client asked, in order, with specifics: a project, a number, a tool.
-    - End with one clear next step or one useful question.
+    HOW TO WRITE TO THE CLIENT
+    - Write the way {name} types a quick Upwork message: plain, direct, a little informal. Not like an assistant, not like a cover letter.
+    - Copy the length and tone of the messages {name} wrote themself in this conversation. With none to go on, keep it short and plain.
+    - Most replies are 2 to 5 sentences. A follow-up or check-in is 1 to 3 sentences that only nudge: no new pitch, and no new questions unless {name} asks for them.
+    - Answer what the client asked. Add a detail (a project, a number, a tool) only when it answers something.
+    - No flattery, and no repeating the client's words back. No clever lines, wordplay or "not X, it's Y". No closing sentence that sums up or explains the message.
+    - One next step at most, and only when there is a real one.
     - Never promise a rate, a date, availability or a deliverable that the profile, the proposal or {name}'s note does not give. When it is needed and missing, say {name} will confirm it.
-    - No greeting fluff, no sign-off block, no signature.
-    - Hyphens. Never em dashes or en dashes. Contractions. Plain text, no bold glyphs.
+    - No dashes between clauses: use a full stop or a comma. No bullet lists unless the client asked several questions. No bold, no sign-off, no signature.
     - Never: {banned}.
+
+    WHEN {name} ASKS YOU SOMETHING PRIVATELY
+    - Answer in a few plain sentences. Advice, not an essay.
   TXT
 
   EXAMPLE_TURN = <<~TXT.strip.freeze

@@ -32,7 +32,7 @@ class ConversationReplyTest < ActiveSupport::TestCase
       assert_match "I built Sera, a Twilio voice agent on Rails.", prompt
       assert_match "Can you start Tuesday?", prompt
       assert_match "note for this reply: say yes", prompt
-      assert_equal [ "Happy to - Tuesday works.", "s-1" ], [ result.body, result.session_id ]
+      assert_equal [ "Happy to, Tuesday works.", "s-1", "me" ], [ result.body, result.session_id, result.role ]
     end
   end
 
@@ -122,6 +122,23 @@ class ConversationReplyTest < ActiveSupport::TestCase
     claude do |calls|
       assert_raises(ConversationReply::Error) { ConversationReply.call(@posting) }
       assert_empty calls
+    end
+  end
+
+  test "when there is nothing to send the client, Radar says so to you privately instead of drafting" do
+    @posting.messages.create!(role: "client", body: "Should a short check-in be enough?")
+    claude(text: "That reads like your own question. A two-line check-in is enough.") do |calls|
+      assert_equal "radar", ConversationReply.call(@posting).role
+      assert_match "answer #{Profile.first_name} in plain text with no fenced block", calls.sole[:prompt]
+    end
+  end
+
+  test "the example rules ask for Sohair's own tone and short check-ins" do
+    @posting.messages.create!(role: "client", body: "Any update?")
+    claude do |calls|
+      ConversationReply.call(@posting)
+      assert_match "Copy the length and tone of the messages", calls.sole[:prompt]
+      assert_match "A follow-up or check-in is 1 to 3 sentences", calls.sole[:prompt]
     end
   end
 end

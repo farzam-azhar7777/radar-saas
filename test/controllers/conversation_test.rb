@@ -25,6 +25,7 @@ class ConversationTest < ActionDispatch::IntegrationTest
     @posting.messages.create!(role: "client", body: "Can you start Tuesday?")
     original = ConversationReply.method(:call)
     ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "Yes.", role: "me", session_id: "s-1", meta: { "session_id" => "s-1" }) }
+    @posting.update!(reply_queued_at: Time.current)
     DraftReplyJob.perform_now(@posting)
     ConversationReply.define_singleton_method(:call, original)
 
@@ -44,6 +45,7 @@ class ConversationTest < ActionDispatch::IntegrationTest
     @posting.messages.create!(role: "client", body: "Can you start Tuesday?")
     original = ConversationReply.method(:call)
     ConversationReply.define_singleton_method(:call) { |*| raise ClaudeRun::Error, "claude exited 1" }
+    @posting.update!(reply_queued_at: Time.current)
     DraftReplyJob.perform_now(@posting)
     ConversationReply.define_singleton_method(:call, original)
 
@@ -117,11 +119,40 @@ class ConversationTest < ActionDispatch::IntegrationTest
 
     original = ConversationReply.method(:call)
     ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "The restaurant one.", role: "radar", session_id: "s-1", meta: { "session_id" => "s-1" }) }
+    @posting.update!(reply_queued_at: Time.current)
     DraftReplyJob.perform_now(@posting)
     ConversationReply.define_singleton_method(:call, original)
 
     get job_posting_path(@posting)
     assert_select "##{ActionView::RecordIdentifier.dom_id(@posting.messages.last)}", text: /Radar.*only you see this.*The restaurant one\./m
     assert_select "#conversation input[type=radio][name='message[role]'][value=ask]"
+  end
+
+  test "Stop gives the box back, and whatever that run writes is thrown away" do
+    @posting.messages.create!(role: "ask", body: "A follow-up check-in please")
+    @posting.update!(reply_queued_at: Time.current)
+    job = DraftReplyJob.new(JobPosting.find(@posting.id))
+
+    get job_posting_path(@posting)
+    assert_select "#conversation form[action=?] button", stop_job_posting_messages_path(@posting), text: "Stop"
+
+    post stop_job_posting_messages_path(@posting)
+    assert_not @posting.reload.replying?
+
+    original = ConversationReply.method(:call)
+    ConversationReply.define_singleton_method(:call) { |*| ConversationReply::Result.new(body: "Late", role: "me", session_id: "s", meta: {}) }
+    job.perform_now
+    ConversationReply.define_singleton_method(:call, original)
+    assert_equal "ask", @posting.messages.reload.last.role
+
+    get job_posting_path(@posting)
+    assert_select "#conversation .notice", text: /Radar hasn't answered your last message\./
+    assert_select "form[action=?] button", redraft_job_posting_messages_path(@posting), text: "Answer now"
+  end
+
+  test "an Upwork thread pasted under Ask Radar is still split into messages" do
+    Profile.current.update!(full_name: "Sohair Ahmad")
+    post job_posting_messages_path(@posting), params: { message: { role: "ask", body: "Here is the latest:\n" + file_fixture("upwork_conversation.txt").read } }
+    assert_equal %w[client me client], @posting.messages.reload.map(&:role)
   end
 end
