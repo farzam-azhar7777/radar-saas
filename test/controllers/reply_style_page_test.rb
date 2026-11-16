@@ -3,7 +3,7 @@ require "test_helper"
 class ReplyStylePageTest < ActionDispatch::IntegrationTest
   test "the page opens on the example, saves your own, and restores the example" do
     get edit_reply_style_path
-    assert_select "textarea[name='reply_style[rules]']", text: /HOW TO REPLY/
+    assert_select "textarea[name='reply_style[rules]']", text: /HOW TO WRITE TO THE CLIENT/
     assert_select "a", text: "Restore the example", count: 0
 
     patch reply_style_path, params: { reply_style: { rules: "Short. {name}.", turn: "New: {client_message}" } }

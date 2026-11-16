@@ -5,10 +5,9 @@ class MessagesController < ApplicationController
     return redirect_to(conversation, notice: "Radar is still writing.") if @posting.replying?
 
     fields = params.expect(message: %i[body note role])
-    return ask(fields[:body]) if fields[:role] == "ask"
-
     transcript = ConversationTranscript.parse(fields[:body], me: [ Profile.current.full_name, Profile.first_name ])
     return import(transcript, note: fields[:note]) if transcript
+    return ask(fields[:body]) if fields[:role] == "ask"
 
     message = @posting.messages.new(body: fields[:body], note: fields[:note], role: "client")
     return redirect_to(conversation, alert: "Paste the client's message first.") unless message.save
@@ -26,6 +25,11 @@ class MessagesController < ApplicationController
     @posting.messages.find(params[:id]).destroy!
     @posting.update_columns(conversation_session_id: nil)
     redirect_to conversation, notice: "Removed. The next reply starts from the conversation as it is now."
+  end
+
+  def stop
+    @posting.update_columns(reply_queued_at: nil, reply_error: nil)
+    redirect_to conversation, notice: "Stopped. Nothing from that run will be added."
   end
 
   def redraft

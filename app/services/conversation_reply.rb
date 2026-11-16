@@ -16,11 +16,10 @@ class ConversationReply
     raise Error, "there is nothing new to answer" unless waiting.last&.awaits_radar?
 
     run = resumed || ClaudeRun.call(opening + turn, timeout: TIMEOUT, model: Radar.writer_model, label: "conversation reply")
-    body = ProposalAutofix.plain_dashes(ClaudeRun.fenced(run.text))
+    body = without_dashes(ClaudeRun.fenced(run.text))
     raise Error, "Claude came back with an empty reply" if body.blank?
 
-    role = asked? && !run.text.include?("```") ? "radar" : "me"
-    Result.new(body: body, role: role, session_id: run.meta["session_id"], meta: run.meta)
+    Result.new(body: body, role: run.text.include?("```") ? "me" : "radar", session_id: run.meta["session_id"], meta: run.meta)
   end
 
   private
@@ -93,8 +92,13 @@ class ConversationReply
   def client_instruction
     clients = waiting.select(&:client?)
     ReplyStyle.turn_for(name: first_name, client_message: clients.map(&:body).join("\n\n"),
-                        note: clients.filter_map { |m| m.note.presence }.join(" "))
+                        note: clients.filter_map { |m| m.note.presence }.join(" ")) +
+      "\n\nA message for the client always goes inside a single fenced block. If there is nothing worth sending yet, " \
+      "or what you were given is really #{first_name} talking to you rather than the client, answer #{first_name} in " \
+      "plain text with no fenced block instead."
   end
+
+  def without_dashes(text) = text.gsub(/(\S) [-–—] (?=\S)/, '\1, ').gsub(/[–—]/, "-")
 
   def ask_instruction
     "#{first_name} is asking you privately; the client never sees this. If they want a message to send the client, " \
@@ -111,7 +115,7 @@ class ConversationReply
   end
 
   def speaker(message)
-    { "client" => "Client", "me" => first_name, "ask" => "#{first_name}, privately to you",
+    { "client" => "Client", "me" => message.drafted? ? "#{first_name} (sent from your draft)" : "#{first_name} (wrote this themself)", "ask" => "#{first_name}, privately to you",
       "radar" => "You, privately to #{first_name}" }.fetch(message.role)
   end
 end

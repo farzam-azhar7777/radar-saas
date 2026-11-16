@@ -14,7 +14,10 @@ Rails.application.routes.draw do
       patch :template
     end
     resources :messages, only: %i[create update destroy] do
-      post :redraft, on: :collection
+      collection do
+        post :redraft
+        post :stop
+      end
     end
   end
 
