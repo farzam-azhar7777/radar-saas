@@ -34,6 +34,7 @@ class JobPosting < ApplicationRecord
     next all if term.blank?
 
     next where(upwork_id: term[PastedJob::UPWORK_LINK, 1]) if term[PastedJob::UPWORK_LINK, 1]
+    next where(upwork_id: [ $1, $1.delete_prefix("02") ]) if term.strip =~ /\A~?(\d{15,})\z/
 
     like = "%#{term.to_s.strip.downcase}%"
     where("LOWER(title) LIKE :q OR LOWER(description) LIKE :q OR LOWER(skills) LIKE :q " \

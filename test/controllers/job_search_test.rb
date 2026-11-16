@@ -58,4 +58,13 @@ class JobSearchTest < ActionDispatch::IntegrationTest
     get job_search_path(q: "voice")
     assert_equal [ job_posting_path(applied), job_posting_path(newer) ], css_select("a[data-command-palette-target=item]").map { |a| a["href"] }
   end
+
+  test "a bare job ID finds the job, with or without the ~02 Upwork puts in front" do
+    target = job("Voice agent", upwork_id: "2121234719678974421")
+    %w[022121234719678974421 ~022121234719678974421 2121234719678974421].each do |id|
+      get job_search_path(q: id)
+      assert_select "a[data-command-palette-target=item]", 1
+      assert_select "a[href=?]", job_posting_path(target)
+    end
+  end
 end

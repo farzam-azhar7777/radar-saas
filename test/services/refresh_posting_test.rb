@@ -4,7 +4,9 @@ class RefreshPostingTest < ActiveSupport::TestCase
   class StubSource
     attr_reader :expressions
 
-    def initialize(rows) = (@rows = rows; @expressions = [])
+    def initialize(rows, title: nil) = (@rows = rows; @title = title; @expressions = [])
+
+    def current_title(_id) = @title
 
     def fetch(expression, _page)
       @expressions << expression
@@ -86,5 +88,32 @@ class RefreshPostingTest < ActiveSupport::TestCase
     result = RefreshPosting.call(@posting, source: broken)
     assert_not result.found
     assert_match(/did not answer/, result.message)
+  end
+
+  test "a job the client renamed is found again by asking Upwork for its title, and the new title is kept" do
+    source = StubSource.new({ %q{"Rails Fleet Booking"} => [ row ] }, title: "Rails Engineer: Fleet Booking Engine")
+    result = RefreshPosting.call(@posting, source: source)
+
+    assert result.found
+    assert_equal "Rails Engineer: Fleet Booking Engine", @posting.reload.title
+    assert_match "Upwork renamed this job to “Rails Engineer: Fleet Booking Engine”. Saved. Now 30 bids", result.message
+
+    @posting.update!(title: "Senior Full-Stack Developer for Car Rental Platform")
+    source = StubSource.new({ %q{"Rails Fleet Booking"} => [ row("already_applied" => true) ] }, title: "Rails Engineer: Fleet Booking Engine")
+    assert_equal "Upwork renamed this job to “Rails Engineer: Fleet Booking Engine”. Saved. You have already applied to this one.",
+                 RefreshPosting.call(@posting, source: source).message
+  end
+
+  test "a renamed job whose bids cannot be found still gets its new title" do
+    result = RefreshPosting.call(@posting, source: StubSource.new({}, title: "Fleet Booking Engine"))
+    assert_not result.found
+    assert_equal "Fleet Booking Engine", @posting.reload.title
+    assert_match "renamed this job", result.message
+  end
+
+  test "a job that is simply gone says so, and keeps its title" do
+    result = RefreshPosting.call(@posting, source: StubSource.new({}))
+    assert_match "Could not find this job on Upwork", result.message
+    assert_equal "Senior Full-Stack Developer for Car Rental Platform", @posting.reload.title
   end
 end
