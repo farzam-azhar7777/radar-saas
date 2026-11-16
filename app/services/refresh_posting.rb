@@ -29,8 +29,8 @@ class RefreshPosting
   end
 
   def call
-    row = lookup
-    return Result.new(found: false, changes: {}, message: "Could not find this job on Upwork. It may have been closed or filled.") if row.nil?
+    row = lookup || lookup_after_rename
+    return not_found if row.nil?
 
     changes = apply(row)
     Result.new(found: true, changes: changes, message: summary(changes))
@@ -51,6 +51,23 @@ class RefreshPosting
       (%("#{meaningful.first(2).join(' ')}") if meaningful.size >= 2),
       words.first(6).join(" ").presence
     ].compact.uniq
+  end
+
+  def lookup_after_rename
+    title = @source.current_title(@posting.upwork_id)
+    return if title.blank? || title == @posting.title
+
+    @renamed = [ @posting.title, title ]
+    @posting.title = title
+    lookup
+  end
+
+  def not_found
+    return Result.new(found: false, changes: {}, message: "Could not find this job on Upwork. It may have been closed or filled.") unless @renamed
+
+    @posting.save!
+    Result.new(found: false, changes: { "title" => @renamed },
+               message: "Upwork renamed this job to “#{@renamed.last}”. Saved, but its live bid count could not be found.")
   end
 
   def lookup
@@ -81,6 +98,7 @@ class RefreshPosting
       @posting.public_send("#{field}=", now)
     end
 
+    changes["title"] = @renamed if @renamed
     @posting.refreshed_at = Time.current
 
     # More competition can change the shape the proposal should take, so the
@@ -99,6 +117,7 @@ class RefreshPosting
   def summary(changes)
     # Ordered by what Farzam would want to know first. Having already applied
     # outranks everything, because it means he can stop reading.
+    return "Upwork renamed this job to “#{changes['title'].last}”. Saved. #{summary(changes.except('title'))}".delete_suffix(" Nothing has changed.") if changes["title"]
     return "You have already applied to this one." if changes["already_applied"]&.last
 
     if (bids = changes["total_applicants"])
