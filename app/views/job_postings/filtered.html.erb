@@ -1,6 +1,20 @@
 <% content_for :title, "Passed over - Radar" %>
 <h1 class="title">Passed over</h1>
-<p class="lede mt-1">Jobs Radar decided were not worth your time, and the reason for each. If one should have reached you, move it to the inbox; the weakest scores show what to change in the search.</p>
+<p class="lede mt-1">Jobs Radar decided were not worth your time, and the reason for each. If one should have reached you, move it to the inbox. Radar remembers why it was passed over, and once a pattern shows, suggests a change to the search.</p>
+
+<% PassedOverAdvice.suggestions.each do |a| %>
+  <section class="notice notice-warn mt-5 items-start">
+    <%= icon(:spark, css: "mt-0.5 h-4 w-4 flex-none") %>
+    <div class="flex-1">
+      <p class="font-semibold">Lower the <%= a.search.name %> search's inbox line from <%= a.search.threshold %> to <%= a.to %>?</p>
+      <p class="mt-0.5 text-[0.8125rem]">You moved <%= a.moves %> of its passed-over jobs back to the inbox, scoring <%= a.to %> and up. At <%= a.to %>, jobs like those reach your inbox on their own<%= a.would_clear.positive? ? ", and #{a.would_clear} from the last week would move there now" : "" %>.</p>
+      <div class="mt-2.5 flex flex-wrap gap-2">
+        <%= button_to "Lower it to #{a.to}", apply_passed_over_advice_path, params: { search_id: a.search.id, to: a.to }, class: "btn btn-primary btn-sm" %>
+        <%= button_to "Not now", dismiss_passed_over_advice_path, method: :delete, params: { key: a.key }, class: "btn btn-ghost btn-sm" %>
+      </div>
+    </div>
+  </section>
+<% end %>
 
 <%= render "job_postings/toolbar", path: filtered_path %>
 
@@ -12,26 +26,30 @@
 <% else %>
   <div class="panel mt-5 divide-y divide-rule overflow-hidden">
     <% @postings.each do |posting| %>
+      <% why = PassReason.for(posting) %>
       <div class="grid grid-cols-[3.5rem_1fr] gap-x-5 gap-y-3 px-5 py-4 md:grid-cols-[3.5rem_1fr_auto] md:items-start">
         <span class="dial <%= dial_class(posting.score, strong: posting.hot?) %>" style="--pct: <%= posting.score.to_i %>"><span><%= posting.score %></span></span>
         <div class="min-w-0">
-          <p class="truncate font-semibold"><%= posting.title %></p>
+          <div class="flex items-center gap-2">
+            <%= link_to posting.title, job_posting_path(posting), class: "truncate font-semibold hover:underline hover:underline-offset-2" %>
+            <% if why.near_miss? %><span class="chip chip-warn flex-none">Just missed</span><% end %>
+          </div>
           <p class="mt-1 flex flex-wrap gap-x-4 text-[0.8125rem] text-muted">
             <span><%= posting.budget_label %></span>
             <% if posting.client_location %><span><%= posting.client_location %></span><% end %>
-            <% if posting.saved_search %><span><%= posting.saved_search.name %></span><% end %>
+            <span><%= posting.age_label %></span>
           </p>
-          <ul class="mt-2.5 space-y-1">
-            <% Array(posting.score_reasons).sort_by { |r| r["points"].to_i - r["max"].to_i }.first(3).each do |r| %>
-              <li class="text-[0.8125rem] text-muted">
-                <span class="font-semibold text-ink"><%= r["key"].to_s.tr("_", " ").capitalize %></span>
-                <span class="tnum"><%= r["points"] %> of <%= r["max"] %>.</span>
-                <%= r["note"].to_s.truncate(90) %>
-              </li>
-            <% end %>
-          </ul>
+          <p class="mt-2 text-[0.8125rem] font-semibold <%= why.near_miss? ? 'text-warn' : 'text-ink' %>"><%= why.headline %></p>
+          <% if why.factors.any? %>
+            <ul class="mt-1 space-y-0.5">
+              <% why.factors.each do |r| %>
+                <li class="text-[0.8125rem] text-muted"><%= r["key"].to_s.tr("_", " ").capitalize %> <span class="tnum"><%= r["points"] %> of <%= r["max"] %></span>: <%= r["note"].to_s.truncate(110) %></li>
+              <% end %>
+            </ul>
+          <% end %>
         </div>
-        <%= button_to "Move to inbox", promote_job_posting_path(posting), class: "btn btn-secondary btn-sm", form: { class: "col-start-2 md:col-start-auto" } %>
+        <%= button_to "Move to inbox", promote_job_posting_path(posting), class: "btn btn-secondary btn-sm", form: { class: "col-start-2 md:col-start-auto" },
+              title: "Moves it to the inbox and writes a proposal. Radar remembers why it was passed over." %>
       </div>
     <% end %>
   </div>

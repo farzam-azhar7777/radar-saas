@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   end
 
   get "filtered", to: "job_postings#filtered", as: :filtered
+  post "filtered/advice", to: "passed_over_advice#apply", as: :apply_passed_over_advice
+  delete "filtered/advice", to: "passed_over_advice#dismiss", as: :dismiss_passed_over_advice
   get "applied",  to: "job_postings#applied",  as: :applied
   get "find", to: "job_searches#show", as: :job_search
 

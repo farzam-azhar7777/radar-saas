@@ -89,12 +89,14 @@ class JobPostingsController < ApplicationController
 
   def dismiss
     @posting.update!(status: "dismissed")
+    return redirect_back(fallback_location: root_path, notice: "Not interested. #{@posting.title.truncate(60)} is hidden.") if params[:from] == "list"
+
     redirect_to (@posting.pasted? ? pasted_jobs_path : root_path), notice: "Dismissed."
   end
 
   # From the Filtered out tab: "this was actually a match".
   def promote
-    @posting.update!(status: "matched")
+    @posting.move_back_to_inbox!
     queue_generation
     redirect_to @posting, notice: "Promoted. Writing a proposal now."
   end
