@@ -61,6 +61,12 @@ module JobSource
       }
     GQL
 
+    TITLE = <<~GQL.freeze
+      query RadarTitle($id: ID!) {
+        marketplaceJobPosting(id: $id) { content { title } }
+      }
+    GQL
+
     CLIENT_STATS = <<~GQL.freeze
       query RadarClientStats($id: ID!) {
         jobPubDetails(id: $id) {
@@ -143,6 +149,12 @@ module JobSource
         "preferred_locations" => Array(node.dig("contractorSelection", "location", "countries")),
         "detail_fetched_at" => Time.current
       }
+    end
+
+    def current_title(upwork_id)
+      data = @client.query(TITLE, { "id" => upwork_id })
+      ApiUsage.record!
+      data.dig("marketplaceJobPosting", "content", "title").presence
     end
 
     def client_stats(upwork_id)
