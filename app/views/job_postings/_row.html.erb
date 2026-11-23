@@ -54,5 +54,10 @@
     <% else %>
       <%= button_to "Write one", generate_job_posting_path(posting), class: "btn btn-secondary btn-sm", form: { class: "inline-block" } %>
     <% end %>
+    <% unless %w[dismissed applied].include?(posting.status) %>
+      <%= button_to "Not interested", dismiss_job_posting_path(posting), params: { from: "list" },
+            class: "mt-1.5 text-[0.75rem] font-semibold text-faint hover:text-ink", form: { class: "md:block" },
+            title: "Hides the job. Nothing is written for it." %>
+    <% end %>
   </div>
 </div>

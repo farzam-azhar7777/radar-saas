@@ -65,6 +65,10 @@ class JobPosting < ApplicationRecord
                   .limit(limit)
   end
 
+  def move_back_to_inbox!
+    update!(passed_over_for: PassReason.for(self).to_h, moved_back_at: Time.current, status: "matched")
+  end
+
   def place_label
     return "Pasted jobs" if pasted? && status != "applied"
 

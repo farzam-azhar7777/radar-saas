@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_095004) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_140118) do
   create_table "api_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "on", null: false
@@ -80,9 +80,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_095004) do
     t.decimal "hourly_max", precision: 10, scale: 2
     t.decimal "hourly_min", precision: 10, scale: 2
     t.string "job_url"
+    t.datetime "moved_back_at"
     t.datetime "notified_at"
     t.string "outcome"
     t.datetime "outcome_at"
+    t.json "passed_over_for"
     t.boolean "preferred_location_mandatory", default: false, null: false
     t.json "preferred_locations", default: []
     t.boolean "premium", default: false, null: false
@@ -107,6 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_095004) do
     t.datetime "updated_at", null: false
     t.string "upwork_id", null: false
     t.index ["client_country", "created_at"], name: "index_job_postings_on_client_country_and_created_at"
+    t.index ["moved_back_at"], name: "index_job_postings_on_moved_back_at"
     t.index ["notified_at"], name: "index_job_postings_on_notified_at"
     t.index ["outcome"], name: "index_job_postings_on_outcome"
     t.index ["repost_of_id"], name: "index_job_postings_on_repost_of_id"
