@@ -15,10 +15,18 @@ class ProposalSpecTest < ActiveSupport::TestCase
     assert_includes text, "𝑨𝒅𝒂 𝑳𝒐𝒗𝒆𝒍𝒂𝒄𝒆"
   end
 
-  test "without an opening of their own, the example is brackets, never an invented product" do
+  # The fill-in sentence this replaced opened 65 of 95 proposals word for word.
+  test "without an opening of their own, there is no sentence to fill in" do
     text = ProposalSpec.render(Profile.new(full_name: "Ada Lovelace"))
-    assert_includes text, "[Live product name] is the closest thing to [what they are building]"
-    assert_includes ProposalSpec.opening_model(Profile.new(full_name: "Ada")), "filling every bracket"
+    assert_includes text, ProposalSpec::NO_EXAMPLE
+    assert_not_includes text, "is the closest thing to ["
+    assert_equal ProposalSpec::NO_EXAMPLE, ProposalSpec.opening_model(Profile.new(full_name: "Ada"))
+  end
+
+  test "their own winning opening is shown for its tone, not as a shape to copy" do
+    model = ProposalSpec.opening_model(Profile.new(full_name: "Ada", winning_opening: "Ledgerline is my billing SaaS."))
+    assert_includes model, "Ledgerline is my billing SaaS."
+    assert_includes model, "never its wording or sentence shape"
   end
 
   test "their own winning opening becomes the example" do

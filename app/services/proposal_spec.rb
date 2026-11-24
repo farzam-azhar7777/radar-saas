@@ -7,12 +7,11 @@
 module ProposalSpec
   PATH = Rails.root.join("config", "proposal_spec.md")
 
-  # Shown when the person has not given an opening of their own. Brackets, not
-  # an invented example: a made-up product in the prompt is a made-up product
-  # waiting to appear in a real proposal.
-  SKELETON = "[Live product name] is the closest thing to [what they are building] I have shipped: " \
-             "[what it is, in their terms], where I [the hard number: commits, users, uptime, revenue] " \
-             "and wired [their stack, named line for line]."
+  # Shown when the person has not given an opening of their own. A description,
+  # not a sentence to fill in: the fill-in sentence this replaced opened 65 of
+  # 95 proposals word for word, and a client who saw two of them saw a template.
+  NO_EXAMPLE = "Name the project from the files that is closest to this post, say in plain words " \
+               "what you built in it, and why that is the same problem they have."
 
   module_function
 
@@ -48,19 +47,21 @@ module ProposalSpec
   def opening_example(profile)
     if profile.winning_opening.present?
       context = profile.winning_opening_context.present? ? " #{profile.winning_opening_context.strip}" : ""
-      "Real example, the one #{profile.first_name} actually sent#{context}:\n\n#{quote(%("#{profile.winning_opening.strip}"))}"
+      "Real example, the one #{profile.first_name} actually sent#{context}:\n\n#{quote(%("#{profile.winning_opening.strip}"))}\n\n" \
+        "Take its directness, never its wording or sentence shape."
     else
-      "The shape, with brackets for what comes from the project files. Fill every bracket from " \
-        "#{profile.first_name}'s real work, never from this example:\n\n#{quote(%("#{SKELETON}"))}"
+      NO_EXAMPLE
     end
   end
 
-  # The one line the generator's prompt uses to show what an opening looks like.
+  # The one line the generator's prompt uses to say what an opening is. A real
+  # opening is shown for its tone only, because copying its shape is the formula.
   def opening_model(profile = Profile.current)
     if profile.winning_opening.present?
-      "Model it on this, which is a real opening #{profile.first_name} sent and used: \"#{profile.winning_opening.strip}\""
+      "This is a real opening #{profile.first_name} sent: \"#{profile.winning_opening.strip}\" " \
+        "Take its directness, never its wording or sentence shape."
     else
-      "Model it on this shape, filling every bracket from the project files: \"#{SKELETON}\""
+      NO_EXAMPLE
     end
   end
 

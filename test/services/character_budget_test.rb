@@ -41,11 +41,22 @@ class CharacterBudgetTest < ActiveSupport::TestCase
     assert_includes text, ProposalGenerator::PROJECT_WORDS.to_s
   end
 
-  test "the target leaves headroom below the hard limit" do
-    target = ProposalCheck::MAX_CHARS - ProposalGenerator::CHARACTER_HEADROOM
+  # Told to aim for 4600, proposals averaged 3,954 characters, and that length
+  # was itself the sign nobody wrote them by hand.
+  test "the target is a short proposal, not the hard limit" do
+    text = prompt_for(posting)
 
-    assert_operator target, :<, ProposalCheck::MAX_CHARS
-    assert_includes prompt_for(posting), target.to_s
+    assert_includes text, ProposalGenerator::TARGET_CHARS
+    assert_match(/ceiling, not a target/, text)
+  end
+
+  test "the writer sees recent openings so it can avoid repeating them" do
+    earlier = posting
+    earlier.proposals.create!(version: 1, body: "On Bounce Rental I took a Rails 4.2 app to 7.1 with Stripe live.")
+
+    text = prompt_for(posting)
+    assert_includes text, "Do NOT reuse their wording"
+    assert_includes text, "- On Bounce Rental I took a Rails 4.2 app to 7.1 with Stripe live."
   end
 
   test "the model is told to protect the letter and cut the projects first" do

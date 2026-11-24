@@ -2,19 +2,17 @@
 # the client and the competition. Nobody writing by hand has these numbers at
 # the moment of writing, which is the whole point.
 class ProposalArchetype
-  # Raised on 2026-09-23. The old budgets were 140 to 260 words and produced
-  # proposals Farzam rejected three times running: too thin to show depth, and
-  # nowhere near enough room for a skills section that answers the client's
-  # requirement list point by point. The version he actually sent for a Rails
-  # backend role runs about 400 words before the related-projects block.
+  # Cut on 2026-11-20. The budgets raised on 2026-09-23 (320 to 460 words) put
+  # the average proposal at 3,954 characters, and long, dense letters were the
+  # plainest sign that nobody wrote them by hand. Bids that get read are short.
   #
   # The budget governs the letter. The related-projects block is counted
   # separately, so it never eats into the argument.
   SHAPES = {
-    "A" => { name: "Few bids or new client", words: 320..460 },
-    "B" => { name: "Established client",     words: 280..420 },
-    "C" => { name: "High competition",       words: 180..280 },
-    "E" => { name: "Vague post",             words: 220..340 }
+    "A" => { name: "Few bids or new client", words: 140..200 },
+    "B" => { name: "Established client",     words: 120..180 },
+    "C" => { name: "High competition",       words: 90..140 },
+    "E" => { name: "Vague post",             words: 90..150 }
   }.freeze
 
   # Screening questions used to shrink the letter to 90-140 words while the
@@ -22,7 +20,7 @@ class ProposalArchetype
   # of answers above a 131-word letter: the answers did all the talking and the
   # thing that actually sells, the letter, was a stub. The letter now keeps its
   # archetype budget whatever else is true, and the answers are what get capped.
-  ANSWER_WORDS = 45..90
+  ANSWER_WORDS = 30..60
 
   # Upwork puts several questions in one field often enough that counting
   # fields under-counts the work. "What is your approach to Rails upgrades.
@@ -33,7 +31,7 @@ class ProposalArchetype
   # Questions asked in the description have no boxes on Upwork's form, so their
   # answers live inside the letter and the letter has to grow to hold them.
   # Tighter than a screening answer because they sit in the flow of a pitch.
-  INLINE_ANSWER_WORDS = 25..45
+  INLINE_ANSWER_WORDS = 15..35
 
   # Upwork hard-rejects a proposal over 5000 characters, and here the answers
   # are part of the same text box, so the letter cannot grow without limit.

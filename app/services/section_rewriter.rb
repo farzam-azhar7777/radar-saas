@@ -117,7 +117,8 @@ class SectionRewriter
     lines << "- Change only what the note asks for. Everything else about this part stays."
     lines << "- Keep its bold Unicode heading if it has one, on its own first line, unchanged."
     lines << "- It has to still join up with the parts either side of it. No repeating a project or a number another part already used."
-    lines << "- Hyphens, never em or en dashes. Contractions. Every claim carries a specific: a project, a number, a version, a tool."
+    lines << "- Hyphens, never em or en dashes. Contractions. One concrete detail per claim, not a string of tool names."
+    lines << "- It must read like a person typed it: no set phrases, no punchline ending a paragraph, never a word about AI or the post's instructions."
     lines << "- Never invent a project, a metric, a client or a date that is not in the career files."
     # Found by running it: a rewritten answer pasted his Upwork profile URL in,
     # which fails the whole proposal's checks on a rule the part never saw.
@@ -129,7 +130,8 @@ class SectionRewriter
       lines << "- Do not start it with a number. The numbering is added afterwards."
     elsif opening?
       lines << "- This is the opening, and it is the only thing the client sees before deciding whether to open the proposal."
-      lines << "- Lead with the hardest quantified proof that matches what they asked for, then a phrase that promises what comes next."
+      lines << "- One or two sentences: the piece of work that matches what they asked for, said plainly. No teaser line after it."
+      lines << "- #{ProposalSpec.opening_model}"
       lines << "- Do NOT open with a question, with their name or years, or by restating their brief. No bold glyphs: they cost two characters each in the preview."
     else
       lines << "- Roughly #{[ @section.word_count, 40 ].max} words unless the note asks for longer or shorter. The whole proposal has to stay under #{ProposalCheck::MAX_CHARS} characters."

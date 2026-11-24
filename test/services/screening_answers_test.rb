@@ -28,8 +28,8 @@ class ScreeningAnswersTest < ActiveSupport::TestCase
 
   test "a stub letter under questions is rejected" do
     p = posting(questions: [ "How do you do Rails upgrades?" ])
-    body = "1. #{'word ' * 70}\n\n-----\n\nReviews on Auto Pilot is a Rails 8 SaaS, 842 of 863 commits mine. #{'word ' * 80}\nFarzam"
-    assert_includes check(body, p)[:failures].join, "under the 320 to 460 budget"
+    body = "1. #{'word ' * 70}\n\n-----\n\nReviews on Auto Pilot is a Rails 8 SaaS, 842 of 863 commits mine. #{'word ' * 40}\nFarzam"
+    assert_includes check(body, p)[:failures].join, "under the 140 to 200 budget"
   end
 
   # --- the answers must stop being a runbook ---
@@ -46,18 +46,18 @@ class ScreeningAnswersTest < ActiveSupport::TestCase
   test "answers have a budget at all, scaled to how many there are" do
     one = shape_for(posting(questions: [ "One?" ]))[:answer_words]
     three = shape_for(posting(questions: [ "One?\nTwo?\nThree?" ]))[:answer_words]
-    assert_equal 45..90, one
-    assert_equal 135..270, three
+    assert_equal 30..60, one
+    assert_equal 90..180, three
   end
 
   # A note since 2026-09-25: he trims an answer in twenty seconds, and a
   # repair to do it cost minutes.
   test "overlong answers are flagged without blaming the letter" do
     p = posting(questions: [ "How do you do Rails upgrades?" ])
-    body = "1. #{'word ' * 300}\n\n-----\n\nReviews on Auto Pilot is a Rails 8 SaaS, 842 of 863 commits mine. #{'word ' * 340}\nFarzam"
+    body = "1. #{'word ' * 300}\n\n-----\n\nReviews on Auto Pilot is a Rails 8 SaaS, 842 of 863 commits mine. #{'word ' * 160}\nFarzam"
     result = check(body, p)
     note = result[:notes].find { |f| f.include?("screening answers") }
-    assert_match "target 45-90", note
+    assert_match "target 30-60", note
     assert_empty result[:notes].select { |n| n.include?("The letter is") }, "the letter is inside its range"
   end
 

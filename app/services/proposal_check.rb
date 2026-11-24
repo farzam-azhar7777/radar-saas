@@ -21,8 +21,26 @@ class ProposalCheck
     "i am writing to", "leverage", "robust", "seamless", "cutting-edge",
     "passionate", "proven track record", "i would love to", "best regards",
     "kind regards", "sincerely", "delve", "elevate", "unlock", "in today's",
-    "dive into", "game-changer", "tailored solution", "excited to bring"
+    "dive into", "game-changer", "tailored solution", "excited to bring",
+    # The set phrases our own drafts repeated until they read as a template,
+    # counted across 95 proposals on 2026-11-20.
+    "closest thing to", "here is how i fit", "here's how i fit", "happy to walk you through",
+    "changes the build", "change the build", "rather say so", "won't invent", "can stand behind"
   ].freeze
+
+  # Openings of the latest proposals sent elsewhere. A new opening sharing a run
+  # of this many words with one of them is the same sentence with a new noun.
+  RECENT = 20
+  ECHO_WORDS = 5
+
+  def self.recent_openings(posting = nil)
+    Proposal.includes(:job_posting).where.not(job_posting_id: posting&.id).order(id: :desc).limit(RECENT)
+            .map { |p| new(p.body, archetype: {}, posting: p.job_posting).first_sentence }.compact_blank
+  end
+
+  # Telling the client about the post's AI trap is the one thing only an AI
+  # writes: "Point 5 asks any AI agent applying to tag itself... I'm not one".
+  TALKS_ABOUT_THE_TRAP = /\b(?:i(?:'|’)?m not an? (?:ai|bot)\b|i am not an? (?:ai|bot)\b|any ai (?:agent|writer|tool)s?\b|left (?:that|the|this) (?:phrase|word) out\b)/i
 
   # An opening that introduces the person, by any form of their name, or leads
   # on years of experience. Their name and photo already sit beside it.
@@ -58,8 +76,11 @@ class ProposalCheck
     failures << opener_restates_brief
     failures << opener_is_a_question
     failures << opener_says_nothing_new
+    failures << opener_echoes_earlier
     failures << dashes
     failures << banned_words
+    failures << talks_about_the_trap
+    failures << repeated_links
     failures << stub_letter
     failures << over_character_limit
     failures << preview_opens_with_answer
@@ -100,7 +121,7 @@ class ProposalCheck
   def letter = parts.letter
   def answers = parts.answer_block.to_s
 
-  def first_sentence = opening.split(/(?<=[.!?])\s/).first.to_s
+  def first_sentence = opening.split(/(?<=[.!?])\s/).first.to_s.strip
 
   # The letter with a required opening word taken off, so "ANCHOR. SurgePoint
   # is..." is judged on its SurgePoint sentence rather than on "ANCHOR."
@@ -139,7 +160,7 @@ class ProposalCheck
     return nil unless first_sentence.include?("?")
 
     "The proposal opens with a question. That reads as someone still working the problem out. " \
-    "Open with the hardest quantified proof that matches what they asked for, and save the one question for late in the letter."
+    "Open with the piece of work that matches what they asked for, and save the one question for late in the letter."
   end
 
   # A specific is a number, a version, or a named project. An opener with none
@@ -153,6 +174,19 @@ class ProposalCheck
     "The first sentence carries no specific: no number, no version, no named project. " \
     "If it could fit 200 different jobs it is too broad. Lead with the proof that matches this post line for line."
   end
+
+  def opener_echoes_earlier
+    return nil if @posting.nil?
+
+    mine = word_runs(first_sentence)
+    echoed = self.class.recent_openings(@posting).find { |earlier| word_runs(earlier).intersect?(mine) }
+    return nil unless echoed
+
+    "The opening repeats the wording of one already sent to another client: #{echoed[0, 70].inspect}. " \
+    "A client who sees two of them sees a template. Write this opening from this post."
+  end
+
+  def word_runs(text) = text.downcase.scan(/[\w'’]+/).each_cons(ECHO_WORDS).to_a
 
   def project_named?(sentence)
     names = CareerData.instance.project_terms.select { |t| t.to_s.length > 4 }
@@ -227,7 +261,7 @@ class ProposalCheck
     return nil unless @body.match?(LIST_OPENING)
 
     "The proposal opens with a numbered answer. These questions were in the description, not Upwork's screening fields, " \
-    "so there are no separate boxes and this is what the client sees in their list. Open on the hook and answer inside the letter."
+    "so there are no separate boxes and this is what the client sees in their list. Open on the matching project and answer inside the letter."
   end
 
   # The client's preview is the start of the cover letter, not of the blob,
@@ -253,6 +287,22 @@ class ProposalCheck
   def banned_words
     hits = BANNED.select { |w| @body.downcase.include?(w) }
     hits.any? ? "Contains banned phrases: #{hits.join(', ')}." : nil
+  end
+
+  def talks_about_the_trap
+    return nil unless @body.match?(TALKS_ABOUT_THE_TRAP)
+
+    "The proposal comments on the post's AI instruction or on being human. A person would just skip it. Remove that sentence."
+  end
+
+  # The same link three times in one proposal reads as filler pasted in by a tool.
+  MAX_SAME_LINK = 2
+
+  def repeated_links
+    repeated = @body.scan(%r{https?://[^\s)]+}).map { |u| u.sub(/[.,;:]+\z/, "").chomp("/") }.tally.select { |_, n| n > MAX_SAME_LINK }
+    return nil if repeated.empty?
+
+    "#{repeated.keys.join(' and ')} appears #{repeated.values.max} times. Link it once and refer back to it."
   end
 
   def length_note
@@ -338,7 +388,7 @@ class ProposalCheck
 
   # The generator reads these too, so the writer is told the word up front
   # instead of the check catching a miss after a whole draft.
-  public :planted, :bait
+  public :planted, :bait, :first_sentence
 
   def planted_word_missing
     word = planted&.dig(:word)
