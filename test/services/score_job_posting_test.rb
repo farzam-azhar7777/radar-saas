@@ -37,6 +37,44 @@ class ScoreJobPostingTest < ActiveSupport::TestCase
     end
   end
 
+  CAREER = Struct.new(:skill_terms, :project_terms).new(
+    [ "python", "stripe", "rest api", "full-stack development", "react" ],
+    [ "payments", "payments integration", "fintech", "api", "webhooks" ]
+  )
+
+  def score(posting, search = search(terms: [ "ai engineer" ])) = ScoreJobPosting.call(posting, saved_search: search, career: CAREER)
+
+  def reason(result, key) = result.reasons.find { |r| r["key"] == key }
+
+  test "a payments job is found by its domain and the skills the client listed, not only by search terms" do
+    job = posting(title: "Expert: Interactive Coding, Payments Processing (Contract, Remote)",
+                  description: "Build sandboxed payment flows: authorization, refunds, ledgers.",
+                  skills: [ "Payment Processing", "Payment Gateway Integration", "API Development", "Python", "Java" ],
+                  hourly_max: 100, category: "web_mobile_software_dev")
+    result = score(job)
+
+    assert_equal "Title is about your past work: payments", reason(result, "title_match")["note"]
+    assert_equal "You have 4 of the 5 skills the client listed", reason(result, "skill_overlap")["note"]
+    assert_operator result.score, :>=, 70
+  end
+
+  test "a title that splits one of his skills still counts" do
+    result = score(posting(title: "Full-Stack Platform Development", description: "PHP site"))
+    assert_equal 15, reason(result, "title_match")["points"]
+  end
+
+  test "singular and plural are the same word" do
+    assert TextMatch.includes?(TextMatch.normalize("Payment Gateway Integration"), "payments")
+    assert TextMatch.includes?(TextMatch.normalize("API Integrations"), "api integration")
+    assert_not TextMatch.includes?(TextMatch.normalize("Business analysis"), "busines")
+  end
+
+  test "listed skills he does not have earn nothing" do
+    result = score(posting(title: "Brand refresh", description: "Logo work", skills: [ "Logo Design", "Figma", "Branding" ]))
+    assert_equal [ 0, "No skill match" ], reason(result, "skill_overlap").values_at("points", "note")
+    assert_equal 0, reason(result, "title_match")["points"]
+  end
+
   test "an older post loses recency points" do
     fresh = ScoreJobPosting.call(posting, saved_search: search).score
     stale = ScoreJobPosting.call(posting(published_at: 5.days.ago), saved_search: search).score

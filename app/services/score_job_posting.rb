@@ -87,8 +87,11 @@ class ScoreJobPosting
       return [ 0.72, "Title says #{hit.inspect}, split by another word" ]
     end
 
-    skill_hits = @career.skill_terms.select { |t| t.length > 3 && TextMatch.includes?(title, t) }
+    skill_hits = @career.skill_terms.select { |t| t.length > 3 && (TextMatch.includes?(title, t) || split_hit([ t ])) }
     return [ 0.6, "Title mentions #{skill_hits.take(2).join(', ')}" ] if skill_hits.any?
+
+    past_work = @career.project_terms.select { |t| t.length > 4 && TextMatch.includes?(title, t) }
+    return [ 0.5, "Title is about your past work: #{past_work.take(2).join(', ')}" ] if past_work.any?
 
     [ 0.0, "Title is not about this kind of work" ]
   end
@@ -128,15 +131,27 @@ class ScoreJobPosting
     end
   end
 
+  def skill_component
+    [ mentioned_skills, listed_skills ].compact.max_by(&:first) || [ 0.0, "No skill match" ]
+  end
+
   # Multi-word skills are worth more than single words: "ruby on rails" is a
   # far stronger signal than "ruby".
-  def skill_component
+  def mentioned_skills
     hits = @career.skill_terms.select { |t| t.length > 2 && TextMatch.includes?(haystack, t) }
-    return [ 0.0, "No skill match" ] if hits.empty?
+    return if hits.empty?
 
     weighted = hits.sum { |t| t.include?(" ") ? 2.0 : 1.0 }
-    fraction = [ weighted / 10.0, 1.0 ].min
-    [ fraction, "Matched #{hits.take(6).join(', ')}#{hits.size > 6 ? " +#{hits.size - 6} more" : ''}" ]
+    [ [ weighted / 10.0, 1.0 ].min, "Matched #{hits.take(6).join(', ')}#{hits.size > 6 ? " +#{hits.size - 6} more" : ''}" ]
+  end
+
+  def listed_skills
+    listed = Array(@posting.skills).map { |s| TextMatch.normalize(s) }.compact_blank
+    return if listed.size < 3
+
+    known = (@career.skill_terms + @career.project_terms).select { |t| t.length > 2 }
+    have = listed.count { |skill| known.any? { |t| TextMatch.includes?(skill, t) } }
+    [ have.fdiv(listed.size), "You have #{have} of the #{listed.size} skills the client listed" ] if have.positive?
   end
 
   def project_component
