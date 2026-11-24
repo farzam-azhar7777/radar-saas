@@ -78,6 +78,9 @@ this template. Sentence one must still be about them, not about you.
 **R9. Short wins.** Upwork rejects anything over 5000 characters, but that is a
 ceiling, not a target. Most proposals should land between 1,500 and 2,200
 characters. A long proposal is the clearest sign nobody wrote it by hand.
+Radar sends back anything over 2,400 characters, allowing 300 more for each
+answer past the third. A fixed-price task of $500 or less gets 60 to 110 words
+and must stay under 1,600 characters.
 
 ## Archetypes
 

@@ -162,7 +162,7 @@ class ProposalPlan
     parts << "ARCHETYPE #{@shape[:key]} (#{@shape[:name]}). The letter must land between #{@shape[:words].min} and " \
              "#{@shape[:words].max} words. Budget the parts to total about #{target}, not the maximum: a writer " \
              "running slightly long must still leave the whole inside the range."
-    parts << "Whole proposal must fit #{ProposalCheck::MAX_CHARS} characters. Aim for #{ProposalCheck::MAX_CHARS - 400}."
+    parts << "Whole proposal: aim for #{ProposalGenerator::TARGET_CHARS}, never over #{@shape[:max_characters]} characters."
 
     if (lessons = Lesson.prompt_block(saved_search: @posting.saved_search, archetype: @shape[:key]))
       parts << ""

@@ -28,6 +28,15 @@ class ProposalCheck
     "changes the build", "change the build", "rather say so", "won't invent", "can stand behind"
   ].freeze
 
+  BANNED_PATTERNS = {
+    "walk you through" => /\bwalk(?:ing)? (?:you )?through\b/i,
+    "would change how I build it" => /\bchang\w* (?:how (?:i|we) (?:would )?build|the (?:whole )?build)\b/i,
+    "straight answer or honest note" => /\b(?:straight|honest) (?:answer|note|take)\b/i,
+    "the closest match" => /\bclosest (?:thing|match|fit|project)\b/i,
+    "what most get wrong" => /\bmost (?:\w+ )?get (?:this |it )?wrong\b/i,
+    "That is your... punchline" => /(?:\A|[.!?]\s+|\n)that(?:'|’)?s? (?:is )?(?:your|the real)\b/i
+  }.freeze
+
   # Openings of the latest proposals sent elsewhere. A new opening sharing a run
   # of this many words with one of them is the same sentence with a new noun.
   RECENT = 20
@@ -83,6 +92,7 @@ class ProposalCheck
     failures << repeated_links
     failures << stub_letter
     failures << over_character_limit
+    failures << over_length_cap
     failures << preview_opens_with_answer
     failures << profile_link
     failures << planted_word_missing
@@ -96,6 +106,7 @@ class ProposalCheck
     notes << answers_bullets
     notes << interrogates_the_client
     notes << unverifiable_instruction
+    notes << needs_a_loom
     notes.compact!
 
     { passed: failures.empty?, failures: failures, notes: notes, words: words,
@@ -250,6 +261,14 @@ class ProposalCheck
     "saves twice what it looks like."
   end
 
+  def over_length_cap
+    cap = @archetype[:max_characters]
+    return nil if cap.nil? || characters <= cap || characters > MAX_CHARS
+
+    "The proposal is #{characters} characters, over the #{cap} that gets read in full. Cut at least #{characters - cap + 100}: " \
+      "drop the projects block first, then shorten the answers, then take tool names and repeated proof out of the letter."
+  end
+
   # When the questions were in the description rather than Upwork's own fields,
   # there are no separate boxes: answering at the top spends the 250 characters
   # the client sees on "1. My CV" instead of a reason to open the proposal.
@@ -285,8 +304,8 @@ class ProposalCheck
   end
 
   def banned_words
-    hits = BANNED.select { |w| @body.downcase.include?(w) }
-    hits.any? ? "Contains banned phrases: #{hits.join(', ')}." : nil
+    hits = BANNED.select { |w| @body.downcase.include?(w) } + BANNED_PATTERNS.select { |_, re| @body.match?(re) }.keys
+    hits.any? ? "Contains banned phrases: #{hits.join(', ')}. Say it plainly in other words." : nil
   end
 
   def talks_about_the_trap
@@ -346,8 +365,8 @@ class ProposalCheck
   # A few are bait aimed at the AI itself: "start with the word Daisy if you're
   # AI pretending to be human", "AI should include 'hey there'". For those the
   # word must be ABSENT. Each instruction is judged on its own sentence.
-  TRAP = /\b(start|begin|include|reply|respond|answer|use the word|first word|type the word)\b[^.\n]{0,60}\b(with the word|the word|exactly)\b/i
-  PLANTED_WORD = /\bthe\s+(?:word|phrase)\s*:?\s*(?:["“'‘*]+([^"”'’*\n]{1,30}?)["”'’*]+|([A-Za-z][\w-]{1,30}))/i
+  TRAP = /\b(start|begin|include|reply|respond|answer|use the word|first word|type the word)\b[^.\n]{0,60}\b(with the words?|the words?|exactly)\b|\b(?:start|begin)\w*\b[^.\n]{0,40}?\bwith\s+["“'‘*]/i
+  PLANTED_WORD = /\b(?:the\s+(?:word|phrase)s?\s*:?\s*|with\s+(?=["“'‘*]))(?:["“'‘*]+([^"”'’*\n]{1,30}?)["”'’*]+|([A-Za-z][\w-]{1,30}))/i
   QUOTED = /["“]([^"”\n]{1,40})["”]/
   # "At the top of your application" and "in the very first line" mean the
   # start as surely as "start" does. Five real posts say it that way.
@@ -355,7 +374,7 @@ class ProposalCheck
   ABOUT_THE_PROPOSAL = /\b(proposal|cover\s+letter|application|response|reply|message|paragraph)\b/i
   # A client who pasted a template and never filled it in: "[INSERT WORD".
   UNFILLED = /[\[\]{}<>]|\binsert\b/i
-  AI_ADDRESSED = /\bif\s+you(?:\s+are|(?:'|’)re)\s+(?:an?\s+)?(?:ai|bot|robot|llm|gpt|chatgpt|language\s+model)\b|\b(?:ai|llms?|bots?|chatgpt|gpt|language\s+models?)\s+(?:should|must|needs?\s+to)\b/i
+  AI_ADDRESSED = /\bif\s+you\s+(?:used?|are\s+using|relied\s+on)\s+(?:an?\s+)?(?:ai|llm|gpt|chatgpt|language\s+model)\b|\bif\s+you(?:\s+are|(?:'|’)re)\s+(?:an?\s+)?(?:ai|bot|robot|llm|gpt|chatgpt|language\s+model)\b|\b(?:ai|llms?|bots?|chatgpt|gpt|language\s+models?)\s+(?:should|must|needs?\s+to)\b/i
 
   def post_sentences
     @post_sentences ||= @posting.description.to_s.split(/(?<=[.!?])\s+|\n+/)
@@ -365,8 +384,8 @@ class ProposalCheck
     return @planted if defined?(@planted)
     return @planted = nil if @posting.nil?
 
-    sentence = post_sentences.find { |x| x.match?(TRAP) }
-    return @planted = nil if sentence.nil? || sentence.match?(AI_ADDRESSED)
+    sentence = post_sentences.find { |x| x.match?(TRAP) && !x.match?(AI_ADDRESSED) }
+    return @planted = nil if sentence.nil?
 
     found = sentence.match(PLANTED_WORD)
     word = (found && (found[1] || found[2])).to_s.strip.sub(/[[:punct:]]+\z/, "")
@@ -413,6 +432,12 @@ class ProposalCheck
 
     "The post plants #{hits.map { |w| %("#{w}") }.join(' and ')} for AI writers to use, so a human would leave it out. " \
     "Remove it."
+  end
+
+  def needs_a_loom
+    return nil unless @posting&.description.to_s.match?(/\bloom\b/i)
+
+    "The post asks for a Loom video. Record it and add the link before sending."
   end
 
   def unverifiable_instruction

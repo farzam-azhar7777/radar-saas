@@ -37,6 +37,12 @@ class ProposalArchetype
   # are part of the same text box, so the letter cannot grow without limit.
   MAX_LETTER_WORDS = 650
 
+  MAX_CHARACTERS = 2_400
+  SMALL_JOB_CHARACTERS = 1_600
+  CHARACTERS_PER_EXTRA_ANSWER = 300
+  SMALL_JOB_WORDS = 60..110
+  SMALL_JOB_PRICE = 500
+
   HIGH_COMPETITION = 80
   FEW_BIDS = 15
   ESTABLISHED_SPEND = 10_000
@@ -52,7 +58,7 @@ class ProposalArchetype
   end
 
   def call
-    { key: key, name: SHAPES.fetch(key)[:name], words: words,
+    { key: key, name: SHAPES.fetch(key)[:name], words: words, max_characters: max_characters,
       has_questions: questions?, question_count: question_count,
       answer_words: answer_words, inline_questions: posting.inline_questions,
       signals: signals }
@@ -66,11 +72,16 @@ class ProposalArchetype
   end
 
   def words
-    base = SHAPES.fetch(key)[:words]
+    base = small_job? ? SMALL_JOB_WORDS : SHAPES.fetch(key)[:words]
     n = posting.inline_questions.size
     return base if n.zero?
 
     (base.min + INLINE_ANSWER_WORDS.min * n)..[ base.max + INLINE_ANSWER_WORDS.max * n, MAX_LETTER_WORDS ].min
+  end
+
+  def max_characters
+    extra = [ question_count + posting.inline_questions.size - 3, 0 ].max
+    [ (small_job? ? SMALL_JOB_CHARACTERS : MAX_CHARACTERS) + CHARACTERS_PER_EXTRA_ANSWER * extra, ProposalCheck::MAX_CHARS ].min
   end
 
   # How many distinct things actually have to be answered.
@@ -106,6 +117,7 @@ class ProposalArchetype
   def spend = posting.client_total_spent.to_f
   def questions? = posting.screening_questions_list.any?
   def vague? = posting.description.to_s.length < VAGUE_DESCRIPTION
+  def small_job? = posting.fixed_amount.present? && posting.fixed_amount.to_f <= SMALL_JOB_PRICE
   def established? = spend > ESTABLISHED_SPEND && posting.client_total_hires.to_i >= ESTABLISHED_HIRES
 
   def signals

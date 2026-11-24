@@ -101,7 +101,7 @@ module ProposalAutofix
     end
 
     Result.new(sections: current,
-               fixed: [ "Dropped #{dropped.map { |d| %("#{d}") }.join(' and ')} from related projects to fit Upwork's #{limit} characters" ])
+               fixed: [ "Dropped #{dropped.map { |d| %("#{d}") }.join(' and ')} from related projects to fit #{limit} characters" ])
   end
 
   def characters(sections) = ProposalCheck.characters(ProposalAssembler.call(sections))

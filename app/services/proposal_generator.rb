@@ -41,7 +41,7 @@ class ProposalGenerator
     checks = check(body, shape)
     attempts = 1
 
-    if over_limit?(checks) && (trim = ProposalAutofix.trim_projects(sections))
+    if over_limit?(checks, shape) && (trim = ProposalAutofix.trim_projects(sections, limit: shape[:max_characters]))
       fixed.concat(trim.fixed)
       sections = trim.sections
       body = ProposalAssembler.call(sections)
@@ -129,7 +129,7 @@ class ProposalGenerator
 
   def check(body, shape) = ProposalCheck.call(body, archetype: shape, posting: @posting)
 
-  def over_limit?(checks) = checks[:characters].to_i > ProposalCheck::MAX_CHARS
+  def over_limit?(checks, shape) = checks[:characters].to_i > shape[:max_characters]
 
   def elapsed_ms = ((Time.current - @started) * 1000).to_i
 
@@ -177,12 +177,12 @@ class ProposalGenerator
   # full generation, and the fix was a second full generation. Every letter
   # measured was inside its word budget; what pushed them over was the letter,
   # the answers and an unbudgeted projects block competing for the same 5000.
-  def character_budget
+  def character_budget(shape)
     <<~TXT.strip
 
-      CHARACTER LIMIT. Upwork rejects any proposal over #{ProposalCheck::MAX_CHARS} characters. Everything
-      counts towards it together: the screening answers, the letter, the signature and the related
-      projects block. That is a ceiling, not a target: aim for #{TARGET_CHARS}. Short gets read.
+      CHARACTER LIMIT. Aim for #{TARGET_CHARS}, and never over #{shape[:max_characters]}: the screening
+      answers, the letter, the signature and the related projects block all count together. Radar sends
+      anything longer back to be cut. Short gets read.
       Bold Unicode costs TWO characters per glyph, so a heading of ten bold letters costs twenty.
       Use bold for section headings only, never for whole sentences.
       The related projects block gets at most #{MAX_PROJECTS} projects and about #{PROJECT_WORDS} words each.
@@ -267,7 +267,7 @@ class ProposalGenerator
                "A wall of bullets reads as machine-written and loses the job."
     end
 
-    parts << character_budget
+    parts << character_budget(shape)
 
     if (inline = shape[:inline_questions]).any?
       parts << ""
