@@ -14,7 +14,7 @@ class ProposalArchetypeTest < ActiveSupport::TestCase
   test "a big spender with hires is the established shape" do
     a = ProposalArchetype.new(posting(client_total_spent: 99_000, client_total_hires: 40))
     assert_equal "B", a.key
-    assert_equal 280..420, a.call[:words]
+    assert_equal 120..180, a.call[:words]
   end
 
   test "a thin description is treated as vague" do
@@ -31,8 +31,8 @@ class ProposalArchetypeTest < ActiveSupport::TestCase
   test "screening questions show in the label but no longer shorten the letter" do
     a = ProposalArchetype.new(posting(total_applicants: 3, screening_questions: [ "Why you?" ]))
     assert_equal "A+D", a.label
-    assert_equal 320..460, a.call[:words]
-    assert_equal 45..90, a.call[:answer_words]
+    assert_equal 140..200, a.call[:words]
+    assert_equal 30..60, a.call[:answer_words]
   end
 
   test "signals name the competition and the client history" do
@@ -95,11 +95,49 @@ class ProposalCheckTest < ActiveSupport::TestCase
     assert check("I took Bounce Rental from Rails 4.2 to 7.1 in production with Stripe live. " + plain_body)[:passed]
   end
 
-  # The shape he actually sends, and the one the engine must produce.
-  test "the opening he wrote himself passes" do
+  # Reversed on 2026-11-20. This shape opened 65 of 95 proposals word for word,
+  # so every client who saw two of them saw a template.
+  test "the closest-thing formula and its teaser line are rejected" do
     opener = "Reviews on Auto Pilot at Surge Point is the closest thing to a CRM I have shipped recently: " \
              "a multi-tenant Rails 8 SaaS where I wrote 842 of 863 commits. Here is how I fit: "
-    assert check(opener + plain_body)[:passed]
+    banned = check(opener + plain_body)[:failures].find { |f| f.include?("banned") }
+    assert_includes banned, "closest thing to"
+    assert_includes banned, "here is how i fit"
+  end
+
+  test "an opening that echoes one sent to another client is rejected" do
+    earlier = JobPosting.create!(upwork_id: SecureRandom.hex(6), title: "CRM build", description: "d", status: "applied")
+    earlier.proposals.create!(version: 1, body: "On Bounce Rental I took a Rails 4.2 app to 7.1 with Stripe live. More here.")
+    post = JobPosting.create!(upwork_id: SecureRandom.hex(6), title: "Upgrade", description: "d", status: "matched")
+
+    echo = check("For your upgrade: I took a Rails 4.2 app to 7.1 last year. " + plain_body, posting: post)
+    assert echo[:failures].any? { |f| f.include?("already sent to another client") }
+    assert_includes ProposalCheck.recent_openings(post), "On Bounce Rental I took a Rails 4.2 app to 7.1 with Stripe live."
+
+    fresh = check("Bounce Rental moved from Rails 4.2 to 7.1 in production. " + plain_body, posting: post)
+    assert_empty fresh[:failures].select { |f| f.include?("already sent") }
+  end
+
+  test "a proposal's own earlier versions are not counted as echoes" do
+    post = JobPosting.create!(upwork_id: SecureRandom.hex(6), title: "Upgrade", description: "d", status: "matched")
+    post.proposals.create!(version: 1, body: "I took Bounce Rental from Rails 4.2 to 7.1 in production with Stripe live.")
+    assert_empty ProposalCheck.recent_openings(post)
+  end
+
+  # "Point 5 asks any AI agent applying to tag itself with a phrase. I'm not
+  # one, so I've left that phrase out." went to a client on proposal 87.
+  test "commenting on the post's AI trap is rejected" do
+    [ "I'm not an AI, so I skipped point 5. ", "Point 5 asks any AI agent applying to tag itself. ",
+      "I've left that phrase out on purpose. " ].each do |line|
+      assert check(good_body + " " + line)[:failures].any? { |f| f.include?("AI instruction") }, line
+    end
+    assert_empty check(good_body + " I built AI agents for support triage.")[:failures].select { |f| f.include?("AI instruction") }
+  end
+
+  test "the same link three times is rejected, twice is fine" do
+    link = "https://github.com/Sohair63"
+    assert check("#{good_body} #{link} and #{link}/.")[:passed]
+    assert check("#{good_body} #{link} #{link} #{link}")[:failures].any? { |f| f.include?("appears 3 times") }
   end
 
   test "opening with a self introduction is rejected" do
