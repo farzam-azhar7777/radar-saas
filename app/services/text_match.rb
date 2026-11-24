@@ -6,6 +6,7 @@ module TextMatch
 
   def normalize(text)
     text.to_s.downcase.tr("-_/,", "    ").gsub(/[^a-z0-9+#.\s]/, " ").squeeze(" ").strip
+        .gsub(/\b([a-z]{3,}[a-rt-z])s\b/, '\1')
   end
 
   def haystack_for(posting)

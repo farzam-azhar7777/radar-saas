@@ -1,6 +1,6 @@
 <% content_for :title, "Passed over - Radar" %>
 <h1 class="title">Passed over</h1>
-<p class="lede mt-1">Jobs Radar decided were not worth your time, and the reason for each. If one should have reached you, move it to the inbox. Radar remembers why it was passed over, and once a pattern shows, suggests a change to the search.</p>
+<p class="lede mt-1">Jobs Radar decided were not worth your time, and the reason for each. If one should have reached you, move it to the inbox. Radar remembers why it was passed over, and once a pattern shows, suggests a change to the search. Jobs here are deleted after <%= pluralize(ClearPassedOverJob::KEEP.in_days.to_i, "day") %>.</p>
 
 <% PassedOverAdvice.suggestions.each do |a| %>
   <section class="notice notice-warn mt-5 items-start">

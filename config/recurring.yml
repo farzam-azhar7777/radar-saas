@@ -5,6 +5,10 @@ development: &schedule
     class: PollTickJob
     queue: default
     schedule: every minute
+  clear_passed_over:
+    class: ClearPassedOverJob
+    queue: default
+    schedule: every day at 4am
 
 production:
   <<: *schedule
